@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+
+# Maven
+target/
+!target/*.war
+.mvn/
+mvnw
+mvnw.cmd
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Docker
+.docker/
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Environment files
+.env*
+*.env
+
+# Logs
+*.log
+logs/
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE.md
