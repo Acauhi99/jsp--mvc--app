@@ -20,7 +20,7 @@
             JSP (JavaServer Pages) and Servlets are Java technologies for web
             development. Servlets are Java classes that process HTTP requests,
             while JSP is a technology that allows creating dynamic web pages by
-            combining HTML with Java code.
+            combining HTML with Java code!
           </p>
           <p>
             Together, they form a robust foundation for Java web applications,
