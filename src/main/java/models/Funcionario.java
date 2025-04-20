@@ -1,7 +1,5 @@
 package models;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,10 +10,21 @@ import lombok.Builder;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Customer {
+public class Funcionario {
     private UUID id;
     private String nome;
+    private String cpf;
     private String email;
-    @Builder.Default
-    private List<Ingresso> ingressosAdquiridos = new ArrayList<>();
+    private Cargo cargo;
+    
+    public enum Cargo {
+        VETERINARIO,
+        TRATADOR,
+        GUIA,
+        ADMINISTRADOR,
+        SEGURANCA,
+        LIMPEZA,
+        BILHETEIRO,
+        BIÓLOGO
+    }
 }
