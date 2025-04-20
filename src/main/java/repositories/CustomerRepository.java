@@ -5,7 +5,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 
-import java.util.List;
 import java.util.Optional;
 
 public class CustomerRepository extends BaseRepository<Customer> {
@@ -31,15 +30,4 @@ public class CustomerRepository extends BaseRepository<Customer> {
         }
     }
     
-    public List<Customer> findByNome(String nome) {
-        EntityManager em = getEntityManager();
-        try {
-            TypedQuery<Customer> query = em.createQuery(
-                "SELECT c FROM Customer c WHERE LOWER(c.nome) LIKE LOWER(:nome)", Customer.class);
-            query.setParameter("nome", "%" + nome + "%");
-            return query.getResultList();
-        } finally {
-            em.close();
-        }
-    }
 }

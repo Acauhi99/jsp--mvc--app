@@ -25,11 +25,11 @@ public class Funcionario {
     @Column(nullable = false)
     private String nome;
     
-    @Column(nullable = false, unique = true)
-    private String cpf;
-    
     @Column(nullable = false)
     private String email;
+    
+    @Column(nullable = false)
+    private String password;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

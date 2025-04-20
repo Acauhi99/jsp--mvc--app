@@ -30,6 +30,9 @@ public class Customer {
     @Column(nullable = false, unique = true)
     private String email;
     
+    @Column(nullable = false)
+    private String password;
+    
     @OneToMany(mappedBy = "comprador", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Ingresso> ingressosAdquiridos = new ArrayList<>();
