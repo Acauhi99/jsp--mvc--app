@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
+  version="2.2">
+  <persistence-unit name="zoologicoPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+    <!-- Entidades -->
+    <class>models.Animal</class>
+    <class>models.Customer</class>
+    <class>models.Funcionario</class>
+    <class>models.Habitat</class>
+    <class>models.Ingresso</class>
+
+    <properties>
+      <!-- PostgreSQL -->
+      <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver" />
+      <property name="jakarta.persistence.jdbc.url" value="${DB_URL}" />
+      <property name="jakarta.persistence.jdbc.user" value="${DB_USERNAME}" />
+      <property name="jakarta.persistence.jdbc.password" value="${DB_PASSWORD}" />
+
+      <!-- Hibernate properties -->
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
+      <property name="hibernate.hbm2ddl.auto" value="update" />
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+
+      <!-- Connection pool -->
+      <property name="hibernate.hikari.connectionTimeout" value="20000" />
+      <property name="hibernate.hikari.minimumIdle" value="5" />
+      <property name="hibernate.hikari.maximumPoolSize" value="10" />
+      <property name="hibernate.hikari.idleTimeout" value="300000" />
+    </properties>
+  </persistence-unit>
+</persistence>
