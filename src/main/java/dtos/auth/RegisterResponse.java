@@ -1,21 +1,17 @@
 package dtos.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class RegisterResponse {
-    private UUID id;
-    private String nome;
-    private String email;
-    private String role;
-    private boolean success;
-    private String message;
+public record RegisterResponse(
+    UUID id,
+    String nome,
+    String email,
+    String role,
+    boolean success,
+    String message
+) {
+    public static RegisterResponse of(UUID id, String nome, String email, 
+                                     String role, boolean success, String message) {
+        return new RegisterResponse(id, nome, email, role, success, message);
+    }
 }

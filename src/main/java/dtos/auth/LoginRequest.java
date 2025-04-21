@@ -1,16 +1,7 @@
 package dtos.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginRequest {
-    private String email;
-    private String password;
-    private boolean isFuncionario; 
-}
+public record LoginRequest(
+    String email,
+    String password,
+    boolean isFuncionario
+) {}

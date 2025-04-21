@@ -6,68 +6,74 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @WebListener
 public class DatabaseConfig implements ServletContextListener {
-    
+
     private static final Logger logger = Logger.getLogger(DatabaseConfig.class.getName());
     private static EntityManagerFactory emf;
-    
+    private static final String DB_DIRECTORY = "src/main/data";
+    private static final String DB_FILE_PATH = DB_DIRECTORY + "/zoologico.db";
+    private static final String PERSISTENCE_UNIT_NAME = "zoologicoPU";
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
-            // Obter as configurações do banco de dados
-            String dbUrl = System.getenv("DB_URL");
-            String dbUsername = System.getenv("DB_USERNAME");
-            String dbPassword = System.getenv("DB_PASSWORD");
-            
-            logger.info("Database URL: " + dbUrl);
-            logger.info("Database Username: " + dbUsername);
-            
-            if (dbUrl == null || dbUsername == null || dbPassword == null) {
-                logger.severe("Database environment variables not set properly!");
-                // Set defaults for development/testing
-                dbUrl = "jdbc:postgresql://db:5432/jsp_mvc_app";
-                dbUsername = "db";
-                dbPassword = "123456";
-                logger.info("Using default database settings");
-            }
-            
-            // Registrar como propriedades do sistema
-            System.setProperty("DB_URL", dbUrl);
-            System.setProperty("DB_USERNAME", dbUsername);
-            System.setProperty("DB_PASSWORD", dbPassword);
-            
-            // Configurar o EntityManagerFactory manualmente
-            Map<String, String> properties = new HashMap<>();
-            properties.put("jakarta.persistence.jdbc.url", dbUrl);
-            properties.put("jakarta.persistence.jdbc.user", dbUsername);
-            properties.put("jakarta.persistence.jdbc.password", dbPassword);
-            properties.put("jakarta.persistence.jdbc.driver", "org.postgresql.Driver");
-            
-            // Criar o EntityManagerFactory
-            logger.info("Initializing EntityManagerFactory...");
-            emf = Persistence.createEntityManagerFactory("zoologicoPU", properties);
+            ensureDatabaseDirectoryExists();
+
+            Map<String, String> properties = buildDatabaseProperties();
+
+            logger.log(Level.INFO, "Initializing EntityManagerFactory for persistence unit: {0}", PERSISTENCE_UNIT_NAME);
+            emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME, properties);
             sce.getServletContext().setAttribute("emf", emf);
-            logger.info("EntityManagerFactory initialized successfully");
-            
+            logger.log(Level.INFO, "EntityManagerFactory initialized successfully.");
+
         } catch (Exception e) {
-            logger.severe("Error initializing database: " + e.getMessage());
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error initializing EntityManagerFactory: " + e.getMessage(), e);
+           
         }
     }
-    
+
+    private void ensureDatabaseDirectoryExists() {
+        File dbDir = new File(DB_DIRECTORY);
+        if (!dbDir.exists()) {
+            logger.log(Level.INFO, "Creating database directory: {0}", dbDir.getAbsolutePath());
+            if (!dbDir.mkdirs()) {
+                 logger.log(Level.WARNING, "Failed to create database directory: {0}", dbDir.getAbsolutePath());
+                 
+            }
+        } else {
+             logger.log(Level.FINE, "Database directory already exists: {0}", dbDir.getAbsolutePath());
+        }
+    }
+
+    private Map<String, String> buildDatabaseProperties() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("jakarta.persistence.jdbc.url", "jdbc:sqlite:" + DB_FILE_PATH);
+        properties.put("jakarta.persistence.jdbc.driver", "org.sqlite.JDBC");
+        properties.put("hibernate.dialect", "org.hibernate.community.dialect.SQLiteDialect");
+        
+        return properties;
+    }
+
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         if (emf != null && emf.isOpen()) {
+            logger.log(Level.INFO, "Closing EntityManagerFactory.");
             emf.close();
         }
     }
-    
+
     public static EntityManagerFactory getEntityManagerFactory() {
+        if (emf == null) {
+             logger.log(Level.SEVERE, "EntityManagerFactory is not initialized.");
+            
+        }
         return emf;
     }
 }

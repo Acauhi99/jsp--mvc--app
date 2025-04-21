@@ -6,21 +6,20 @@ import dtos.auth.RegisterRequest;
 import dtos.auth.RegisterResponse;
 import models.Customer;
 import models.Funcionario;
-import utils.JwtUtils;
 import utils.PasswordUtils;
 
 import java.util.Optional;
 
 public class AuthRepository {
-    
+
     private final CustomerRepository customerRepository;
     private final FuncionarioRepository funcionarioRepository;
-    
+
     public AuthRepository() {
         this.customerRepository = new CustomerRepository();
         this.funcionarioRepository = new FuncionarioRepository();
     }
-    
+
     public LoginResponse login(LoginRequest request) {
         if (request.isFuncionario()) {
             return authenticateFuncionario(request);
@@ -28,7 +27,7 @@ public class AuthRepository {
             return authenticateCustomer(request);
         }
     }
-    
+
     public RegisterResponse register(RegisterRequest request) {
         if (request.isFuncionario()) {
             return registerFuncionario(request);
@@ -36,134 +35,121 @@ public class AuthRepository {
             return registerCustomer(request);
         }
     }
-    
+
     private LoginResponse authenticateCustomer(LoginRequest request) {
-        Optional<Customer> optionalCustomer = customerRepository.findByEmail(request.getEmail());
-        
+        Optional<Customer> optionalCustomer = customerRepository.findByEmail(request.email());
+
         if (optionalCustomer.isEmpty()) {
-            return LoginResponse.builder()
-                    .authenticated(false)
-                    .message("Customer not found with this email")
-                    .build();
+            return LoginResponse.of(
+                null, null, null, null, false,
+                "Customer not found with this email"
+            );
         }
-        
+
         Customer customer = optionalCustomer.get();
-        
-        if (!PasswordUtils.verifyPassword(request.getPassword(), customer.getPassword())) {
-            return LoginResponse.builder()
-                    .authenticated(false)
-                    .message("Invalid password")
-                    .build();
+
+        if (!PasswordUtils.verifyPassword(request.password(), customer.getPassword())) {
+            return LoginResponse.of(
+                null, null, null, null, false,
+                "Invalid password"
+            );
         }
-        
-        String token = JwtUtils.generateToken(customer.getId(), customer.getEmail(), "CUSTOMER");
-        
-        return LoginResponse.builder()
-                .id(customer.getId())
-                .nome(customer.getNome())
-                .email(customer.getEmail())
-                .role("CUSTOMER")
-                .token(token)
-                .authenticated(true)
-                .message("Login successful")
-                .build();
+
+        return LoginResponse.of(
+            customer.getId(),
+            customer.getNome(),
+            customer.getEmail(),
+            "CUSTOMER",
+            true,
+            "Login successful"
+        );
     }
-    
+
     private LoginResponse authenticateFuncionario(LoginRequest request) {
-        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(request.getEmail());
-        
+        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(request.email());
+
         if (optionalFuncionario.isEmpty()) {
-            return LoginResponse.builder()
-                    .authenticated(false)
-                    .message("Funcionário not found with this email")
-                    .build();
+            return LoginResponse.of(
+                null, null, null, null, false,
+                "Funcionário not found with this email"
+            );
         }
-        
+
         Funcionario funcionario = optionalFuncionario.get();
-        
-        if (!PasswordUtils.verifyPassword(request.getPassword(), funcionario.getPassword())) {
-            return LoginResponse.builder()
-                    .authenticated(false)
-                    .message("Invalid password")
-                    .build();
+
+        if (!PasswordUtils.verifyPassword(request.password(), funcionario.getPassword())) {
+            return LoginResponse.of(
+                null, null, null, null, false,
+                "Invalid password"
+            );
         }
-        
+
         String role = funcionario.getCargo().toString();
-        String token = JwtUtils.generateToken(funcionario.getId(), funcionario.getEmail(), role);
-        
-        return LoginResponse.builder()
-                .id(funcionario.getId())
-                .nome(funcionario.getNome())
-                .email(funcionario.getEmail())
-                .role(role)
-                .token(token)
-                .authenticated(true)
-                .message("Login successful")
-                .build();
+
+        return LoginResponse.of(
+            funcionario.getId(),
+            funcionario.getNome(),
+            funcionario.getEmail(),
+            role,
+            true,
+            "Login successful"
+        );
     }
-    
+
     private RegisterResponse registerCustomer(RegisterRequest request) {
-        // Check if email already exists
-        if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
-            return RegisterResponse.builder()
-                    .success(false)
-                    .message("Email already in use")
-                    .build();
+        if (customerRepository.findByEmail(request.email()).isPresent()) {
+            return RegisterResponse.of(
+                null, null, null, null, false,
+                "Email already in use"
+            );
         }
-        
-        // Hash password
-        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
-        
-        // Create new customer
-        Customer customer = Customer.builder()
-                .nome(request.getNome())
-                .email(request.getEmail())
-                .password(hashedPassword)
-                .build();
-        
-        // Save customer
+
+        String hashedPassword = PasswordUtils.hashPassword(request.password());
+
+        Customer customer = Customer.create(
+            request.nome(),
+            request.email(),
+            hashedPassword
+        );
+
         Customer savedCustomer = customerRepository.save(customer);
-        
-        return RegisterResponse.builder()
-                .id(savedCustomer.getId())
-                .nome(savedCustomer.getNome())
-                .email(savedCustomer.getEmail())
-                .role("CUSTOMER")
-                .success(true)
-                .message("Customer registered successfully")
-                .build();
+
+        return RegisterResponse.of(
+            savedCustomer.getId(),
+            savedCustomer.getNome(),
+            savedCustomer.getEmail(),
+            "CUSTOMER",
+            true,
+            "Customer registered successfully"
+        );
     }
-    
+
     private RegisterResponse registerFuncionario(RegisterRequest request) {
-        // Check if email already exists
-        if (funcionarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            return RegisterResponse.builder()
-                    .success(false)
-                    .message("Email already in use")
-                    .build();
+        if (funcionarioRepository.findByEmail(request.email()).isPresent()) {
+            return RegisterResponse.of(
+                null, null, null, null, false,
+                "Email already in use"
+            );
         }
-        
-        // Hash password
-        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
-        
-        // Create new funcionario
-        Funcionario funcionario = Funcionario.builder()
-                .nome(request.getNome())
-                .email(request.getEmail())
-                .password(hashedPassword)
-                .cargo(request.getCargo())
-                .build();
-        
-        // Save funcionario
+
+        String hashedPassword = PasswordUtils.hashPassword(request.password());
+
+        Funcionario funcionario = Funcionario.create(
+            request.nome(),
+            request.email(),
+            hashedPassword,
+            request.cargo()
+        );
+
         Funcionario savedFuncionario = funcionarioRepository.save(funcionario);
-        
-        return RegisterResponse.builder()
-                .id(savedFuncionario.getId())
-                .nome(savedFuncionario.getNome())
-                .email(savedFuncionario.getEmail())
-                .role(savedFuncionario.getCargo().toString())
-                .success(true)
-                .message("Funcionário registered successfully")
-                .build();
+
+        return RegisterResponse.of(
+            savedFuncionario.getId(),
+            savedFuncionario.getNome(),
+            savedFuncionario.getEmail(),
+            savedFuncionario.getCargo().toString(),
+            true,
+            "Funcionário registered successfully"
+        );
     }
 }
