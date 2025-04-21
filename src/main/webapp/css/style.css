@@ -267,6 +267,7 @@ body {
 .animal-image {
   height: 200px;
   width: 100%;
+  object-fit: cover;
 }
 
 .animal-card h3 {

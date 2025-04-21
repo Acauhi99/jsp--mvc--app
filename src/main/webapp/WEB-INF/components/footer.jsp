@@ -4,24 +4,24 @@
     <div class="footer-content">
         <div class="footer-section">
             <h3>Zoo Park</h3>
-            <p>Experience the wildlife in our modern facilities with a wide variety of animals from around the world.</p>
+            <p>Experimente a vida selvagem em nossas instalações modernas com uma grande variedade de animais de todo o mundo.</p>
         </div>
-        
+
         <div class="footer-section">
-            <h3>Opening Hours</h3>
-            <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-            <p>Saturday - Sunday: 10:00 AM - 8:00 PM</p>
+            <h3>Horário de Funcionamento</h3>
+            <p>Segunda - Sexta: 9:00 - 18:00</p>
+            <p>Sábado - Domingo: 10:00 - 20:00</p>
         </div>
-        
+
         <div class="footer-section">
-            <h3>Contact</h3>
+            <h3>Contato</h3>
             <p>Email: info@zoopark.com</p>
-            <p>Phone: +123 456 7890</p>
-            <p>Address: 123 Animal Lane, Wildlife City</p>
+            <p>Telefone: +123 456 7890</p>
+            <p>Endereço: Alameda dos Animais, 123, Cidade Selvagem</p>
         </div>
     </div>
-    
+
     <div class="copyright">
-        <p>&copy; 2025 Zoo Park. All rights reserved.</p>
+        <p>&copy; 2025 Zoo Park. Todos os direitos reservados.</p>
     </div>
 </footer>
