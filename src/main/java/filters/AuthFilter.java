@@ -19,6 +19,8 @@ public class AuthFilter implements Filter {
             "/views/index.jsp",
             "/api/auth/login",
             "/api/auth/register",
+            "/about",
+            "/contact", 
             "/css/*",
             "/js/*",
             "/images/*"
