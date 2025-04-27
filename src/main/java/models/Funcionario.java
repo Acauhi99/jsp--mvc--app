@@ -88,13 +88,9 @@ public class Funcionario {
     }
     
     public enum Cargo {
-        VETERINARIO,
-        TRATADOR,
-        GUIA,
-        ADMINISTRADOR,
-        SEGURANCA,
-        LIMPEZA,
-        BILHETEIRO,
-        BIÓLOGO
+        ADMINISTRADOR,  
+        VETERINARIO,    
+        TRATADOR,       
+        MANUTENCAO,    
     }
 }
