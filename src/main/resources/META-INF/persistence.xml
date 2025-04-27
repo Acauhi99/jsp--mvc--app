@@ -12,6 +12,9 @@
     <class>models.Funcionario</class>
     <class>models.Habitat</class>
     <class>models.Ingresso</class>
+    <class>models.Alimentacao</class>
+    <class>models.ConsultaVeterinaria</class>
+    <class>models.ManutencaoHabitat</class>
 
     <properties>
       <!-- SQLite -->
