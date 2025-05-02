@@ -11,11 +11,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import repositories.AuthRepository;
-import models.Funcionario.Cargo;
 
 import java.io.IOException;
 
-@WebServlet("/api/auth/*")
+@WebServlet("/auth/*")
 public class AuthServlet extends HttpServlet {
 
     private final AuthRepository authRepository;
@@ -30,7 +29,7 @@ public class AuthServlet extends HttpServlet {
         String pathInfo = request.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid endpoint");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Endpoint inválido");
             return;
         }
 
@@ -45,7 +44,7 @@ public class AuthServlet extends HttpServlet {
                 handleLogout(request, response);
                 break;
             default:
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Endpoint not found");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Endpoint não encontrado");
                 break;
         }
     }
@@ -54,18 +53,28 @@ public class AuthServlet extends HttpServlet {
             throws ServletException, IOException {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        boolean isFuncionario = "true".equals(request.getParameter("isFuncionario"));
 
-        LoginRequest loginRequest = new LoginRequest(email, password, isFuncionario);
+        LoginRequest loginRequest = new LoginRequest(email, password);
         LoginResponse loginResponse = authRepository.login(loginRequest);
 
-        if (loginResponse.authenticated()) {
+        if (loginResponse.isAuthenticated()) {
             HttpSession session = request.getSession();
             session.setAttribute("user", loginResponse);
 
-            response.sendRedirect(request.getContextPath() + "/");
+            String redirectUrl;
+            String role = loginResponse.getRole();
+
+            if ("VISITANTE".equals(role)) {
+                redirectUrl = "/dashboard/visitor";
+            } else if ("ADMINISTRADOR".equals(role)) {
+                redirectUrl = "/dashboard/admin";
+            } else {
+                redirectUrl = "/dashboard/funcionario";
+            }
+
+            response.sendRedirect(request.getContextPath() + redirectUrl);
         } else {
-            request.setAttribute("errorMessage", loginResponse.message());
+            request.setAttribute("errorMessage", loginResponse.getMessage());
             request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
         }
     }
@@ -77,26 +86,15 @@ public class AuthServlet extends HttpServlet {
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
         boolean isFuncionario = "true".equals(request.getParameter("isFuncionario"));
+        String cargoStr = request.getParameter("cargo");
 
         if (!password.equals(confirmPassword)) {
-            request.setAttribute("errorMessage", "Passwords do not match");
+            request.setAttribute("errorMessage", "As senhas não coincidem");
             request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
             return;
         }
 
-        Cargo cargo = null;
-        if (isFuncionario) {
-            try {
-                String cargoStr = request.getParameter("cargo");
-                cargo = Cargo.valueOf(cargoStr);
-            } catch (IllegalArgumentException e) {
-                request.setAttribute("errorMessage", "Invalid position selected");
-                request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
-                return;
-            }
-        }
-
-        RegisterRequest registerRequest = new RegisterRequest(nome, email, password, isFuncionario, cargo);
+        RegisterRequest registerRequest = new RegisterRequest(nome, email, password, isFuncionario, cargoStr);
         RegisterResponse registerResponse = authRepository.register(registerRequest);
 
         if (registerResponse.success()) {

@@ -4,6 +4,7 @@ import dtos.auth.LoginRequest;
 import dtos.auth.LoginResponse;
 import dtos.auth.RegisterRequest;
 import dtos.auth.RegisterResponse;
+import dtos.auth.UserDetails;
 import models.Customer;
 import models.Funcionario;
 import utils.PasswordUtils;
@@ -21,11 +22,33 @@ public class AuthRepository {
     }
 
     public LoginResponse login(LoginRequest request) {
-        if (request.isFuncionario()) {
-            return authenticateFuncionario(request);
-        } else {
-            return authenticateCustomer(request);
+        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(request.email());
+        
+        if (optionalFuncionario.isPresent()) {
+            Funcionario funcionario = optionalFuncionario.get();
+            
+            if (!PasswordUtils.verifyPassword(request.password(), funcionario.getPassword())) {
+                return LoginResponse.failure("Senha inválida");
+            }
+            
+            UserDetails userDetails = UserDetails.fromFuncionario(funcionario);
+            return LoginResponse.success(userDetails, "Login realizado com sucesso");
         }
+        
+        Optional<Customer> optionalCustomer = customerRepository.findByEmail(request.email());
+        
+        if (optionalCustomer.isPresent()) {
+            Customer customer = optionalCustomer.get();
+            
+            if (!PasswordUtils.verifyPassword(request.password(), customer.getPassword())) {
+                return LoginResponse.failure("Senha inválida");
+            }
+            
+            UserDetails userDetails = UserDetails.fromCustomer(customer);
+            return LoginResponse.success(userDetails, "Login realizado com sucesso");
+        }
+        
+        return LoginResponse.failure("Usuário não encontrado com este email");
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -36,79 +59,19 @@ public class AuthRepository {
         }
     }
 
-    private LoginResponse authenticateCustomer(LoginRequest request) {
-        Optional<Customer> optionalCustomer = customerRepository.findByEmail(request.email());
-
-        if (optionalCustomer.isEmpty()) {
-            return LoginResponse.of(
-                null, null, null, null, false,
-                "Customer not found with this email"
-            );
-        }
-
-        Customer customer = optionalCustomer.get();
-
-        if (!PasswordUtils.verifyPassword(request.password(), customer.getPassword())) {
-            return LoginResponse.of(
-                null, null, null, null, false,
-                "Invalid password"
-            );
-        }
-
-        return LoginResponse.of(
-            customer.getId(),
-            customer.getNome(),
-            customer.getEmail(),
-            "CUSTOMER",
-            true,
-            "Login successful"
-        );
-    }
-
-    private LoginResponse authenticateFuncionario(LoginRequest request) {
-        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(request.email());
-
-        if (optionalFuncionario.isEmpty()) {
-            return LoginResponse.of(
-                null, null, null, null, false,
-                "Funcionário not found with this email"
-            );
-        }
-
-        Funcionario funcionario = optionalFuncionario.get();
-
-        if (!PasswordUtils.verifyPassword(request.password(), funcionario.getPassword())) {
-            return LoginResponse.of(
-                null, null, null, null, false,
-                "Invalid password"
-            );
-        }
-
-        String role = funcionario.getCargo().toString();
-
-        return LoginResponse.of(
-            funcionario.getId(),
-            funcionario.getNome(),
-            funcionario.getEmail(),
-            role,
-            true,
-            "Login successful"
-        );
-    }
-
     private RegisterResponse registerCustomer(RegisterRequest request) {
-        if (customerRepository.findByEmail(request.email()).isPresent()) {
+        if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
             return RegisterResponse.of(
                 null, null, null, null, false,
-                "Email already in use"
+                "Email já está em uso"
             );
         }
 
-        String hashedPassword = PasswordUtils.hashPassword(request.password());
+        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
 
         Customer customer = Customer.create(
-            request.nome(),
-            request.email(),
+            request.getNome(),
+            request.getEmail(),
             hashedPassword
         );
 
@@ -118,27 +81,35 @@ public class AuthRepository {
             savedCustomer.getId(),
             savedCustomer.getNome(),
             savedCustomer.getEmail(),
-            "CUSTOMER",
+            "VISITANTE",
             true,
-            "Customer registered successfully"
+            "Cliente registrado com sucesso"
         );
     }
 
     private RegisterResponse registerFuncionario(RegisterRequest request) {
-        if (funcionarioRepository.findByEmail(request.email()).isPresent()) {
+        if (funcionarioRepository.findByEmail(request.getEmail()).isPresent()) {
             return RegisterResponse.of(
                 null, null, null, null, false,
-                "Email already in use"
+                "Email já está em uso"
             );
         }
 
-        String hashedPassword = PasswordUtils.hashPassword(request.password());
+        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
+        Funcionario.Cargo cargo = request.getCargo();
+        
+        if (cargo == null) {
+            return RegisterResponse.of(
+                null, null, null, null, false,
+                "Cargo inválido selecionado"
+            );
+        }
 
         Funcionario funcionario = Funcionario.create(
-            request.nome(),
-            request.email(),
+            request.getNome(),
+            request.getEmail(),
             hashedPassword,
-            request.cargo()
+            cargo
         );
 
         Funcionario savedFuncionario = funcionarioRepository.save(funcionario);
@@ -149,7 +120,7 @@ public class AuthRepository {
             savedFuncionario.getEmail(),
             savedFuncionario.getCargo().toString(),
             true,
-            "Funcionário registered successfully"
+            "Funcionário registrado com sucesso"
         );
     }
 }

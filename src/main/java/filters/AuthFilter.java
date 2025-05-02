@@ -17,8 +17,8 @@ public class AuthFilter implements Filter {
             "/",
             "/index.jsp",
             "/views/index.jsp",
-            "/api/auth/login",
-            "/api/auth/register",
+            "/auth/login",
+            "/auth/register",
             "/about",
             "/contact", 
             "/css/*",
@@ -51,23 +51,20 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        httpResponse.sendRedirect(contextPath + "/api/auth/login");
+        httpResponse.sendRedirect(contextPath + "/auth/login");
     }
 
     private boolean isPublicEndpoint(String path) {
-        if (PUBLIC_ENDPOINTS.contains(path)) {
-            return true;
-        }
-
         for (String endpoint : PUBLIC_ENDPOINTS) {
             if (endpoint.endsWith("/*")) {
-                String prefix = endpoint.substring(0, endpoint.length() - 1);
+                String prefix = endpoint.substring(0, endpoint.length() - 2);
                 if (path.startsWith(prefix)) {
                     return true;
                 }
+            } else if (path.equals(endpoint)) {
+                return true;
             }
         }
-
         return false;
     }
 

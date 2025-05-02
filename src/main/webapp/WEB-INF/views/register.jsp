@@ -14,7 +14,7 @@
                     </div>
                 </c:if>
 
-                <form action="${pageContext.request.contextPath}/api/auth/register" method="post" class="auth-form">
+                <form action="${pageContext.request.contextPath}/auth/register" method="post" class="auth-form">
                     <div class="form-group">
                         <label for="nome">Nome Completo</label>
                         <input type="text" id="nome" name="nome" required>
@@ -46,14 +46,10 @@
                         <div class="form-group">
                             <label for="cargo">Cargo</label>
                             <select id="cargo" name="cargo">
+                                <option value="ADMINISTRADOR">Administrador</option>
                                 <option value="VETERINARIO">Veterinário</option>
                                 <option value="TRATADOR">Tratador</option>
-                                <option value="GUIA">Guia</option>
-                                <option value="ADMINISTRADOR">Administrador</option>
-                                <option value="SEGURANCA">Segurança</option>
-                                <option value="LIMPEZA">Limpeza</option>
-                                <option value="BILHETEIRO">Bilheteiro</option>
-                                <option value="BIÓLOGO">Biólogo</option>
+                                <option value="MANUTENCAO">Manutenção</option>
                             </select>
                         </div>
                     </div>
@@ -63,7 +59,7 @@
                     </div>
 
                     <div class="auth-links">
-                        <p>Já tem uma conta? <a href="${pageContext.request.contextPath}/api/auth/login">Login</a></p>
+                        <p>Já tem uma conta? <a href="${pageContext.request.contextPath}/auth/login">Login</a></p>
                     </div>
                 </form>
             </div>

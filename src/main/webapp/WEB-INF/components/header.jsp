@@ -19,13 +19,13 @@
     <div class="auth-buttons">
         <c:choose>
             <c:when test="${empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/api/auth/login" class="btn btn-outline">Login</a>
-                <a href="${pageContext.request.contextPath}/api/auth/register" class="btn btn-primary">Registrar</a>
+                <a href="${pageContext.request.contextPath}/auth/login" class="btn btn-outline">Login</a>
+                <a href="${pageContext.request.contextPath}/auth/register" class="btn btn-primary">Registrar</a>
             </c:when>
             <c:otherwise>
                 <div class="user-menu">
                     <span>Bem-vindo(a), ${sessionScope.user.nome}</span>
-                    <a href="${pageContext.request.contextPath}/api/auth/logout" class="btn btn-outline">Sair</a>
+                    <a href="${pageContext.request.contextPath}/auth/logout" class="btn btn-outline">Sair</a>
                 </div>
             </c:otherwise>
         </c:choose>
