@@ -28,7 +28,7 @@ public class DashboardServlet extends HttpServlet {
         
         if (pathInfo == null || pathInfo.equals("/")) {
             // Redirecionar para a dashboard apropriada com base no role
-            if ("VISITOR".equals(user.getRole())) {
+            if ("VISITANTE".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/dashboard/visitor");
             } else if ("ADMINISTRADOR".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/dashboard/admin");
@@ -48,7 +48,7 @@ public class DashboardServlet extends HttpServlet {
                 break;
                 
             case "/funcionario":
-                if ("VISITOR".equals(user.getRole())) {
+                if ("VISITANTE".equals(user.getRole())) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acesso não autorizado");
                     return;
                 }

@@ -1,6 +1,3 @@
-/* ============================================
-   GENERAL STYLES
-   ============================================ */
 * {
   margin: 0;
   padding: 0;
@@ -9,6 +6,7 @@
 
 :root {
   --primary-color: #2c3e50;
+  --primary-dark: #1a2530;
   --secondary-color: #3498db;
   --secondary-color-rgb: 52, 152, 219;
   --accent-color: #e67e22;
@@ -34,7 +32,6 @@ body {
   padding: 0 2rem;
 }
 
-/* Common section styling */
 .section-title {
   text-align: center;
   margin-bottom: 2rem;
@@ -54,7 +51,6 @@ body {
   background-color: var(--accent-color);
 }
 
-/* Placeholder for images */
 .placeholder {
   background-color: #ddd;
   border-radius: var(--border-radius);
@@ -70,22 +66,29 @@ body {
   color: #999;
 }
 
-/* ============================================
-     LAYOUT
-     ============================================ */
 .page-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+}
+
+.content-container {
+  display: block;
+  width: 100%;
 }
 
 .main-content {
   flex: 1;
+  padding: 2rem 0;
+  width: 100%;
 }
 
-/* ============================================
-     HEADER STYLES
-     ============================================ */
+.main-content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .main-header {
   background-color: white;
   box-shadow: var(--box-shadow);
@@ -93,6 +96,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 10;
 }
 
 .logo-container .logo {
@@ -105,6 +110,7 @@ body {
 .main-nav ul {
   display: flex;
   list-style: none;
+  align-items: center;
 }
 
 .main-nav li {
@@ -112,6 +118,9 @@ body {
 }
 
 .main-nav a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--dark-color);
   text-decoration: none;
   font-weight: 500;
@@ -123,9 +132,19 @@ body {
   color: var(--secondary-color);
 }
 
+.main-nav .menu-icon {
+  font-size: 1.1rem;
+}
+
 .auth-buttons {
   display: flex;
   gap: 1rem;
+}
+
+.auth-buttons .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .user-menu {
@@ -134,14 +153,17 @@ body {
   gap: 1rem;
 }
 
-/* ============================================
-     FOOTER STYLES
-     ============================================ */
+.user-menu span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .main-footer {
   background-color: var(--primary-color);
   color: white;
   padding: 3rem 2rem 1rem;
-  margin-top: 3rem;
+  margin-top: auto;
 }
 
 .footer-content {
@@ -172,9 +194,6 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ============================================
-     BUTTON STYLES
-     ============================================ */
 .btn {
   display: inline-block;
   padding: 0.5rem 1.5rem;
@@ -216,9 +235,135 @@ body {
   width: 100%;
 }
 
-/* ============================================
-     HOMEPAGE STYLES
-     ============================================ */
+.dashboard-menu {
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 1rem;
+}
+
+.menu-header {
+  padding: 0.8rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.menu-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.menu-header h3::before {
+  content: "👑";
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.menu-items {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.menu-items a {
+  color: var(--dark-color);
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.menu-items a:hover {
+  background-color: var(--light-color);
+  color: var(--secondary-color);
+}
+
+.menu-items a.active {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.menu-items .menu-icon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.menu-items .separator {
+  width: 1px;
+  height: 24px;
+  background-color: #eee;
+  margin: 0 8px;
+  align-self: center;
+}
+
+.menu-items .profile-link,
+.menu-items .logout-link {
+  margin-left: auto;
+}
+
+.menu-items .profile-link {
+  color: var(--secondary-color);
+  border: 1px solid var(--secondary-color);
+}
+
+.menu-items .profile-link:hover {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.menu-items .logout-link {
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.menu-items .logout-link:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.menu-items a[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--border-radius);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  box-shadow: var(--box-shadow);
+  z-index: 100;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
 .hero {
   background-color: var(--primary-color);
   color: white;
@@ -299,9 +444,6 @@ body {
   height: 350px;
 }
 
-/* ============================================
-     AUTH FORM STYLES
-     ============================================ */
 .auth-section {
   padding: 4rem 0;
 }
@@ -374,7 +516,6 @@ body {
   text-decoration: underline;
 }
 
-/* Alert messages */
 .alert {
   padding: 1rem;
   border-radius: var(--border-radius);
@@ -393,9 +534,6 @@ body {
   border: 1px solid #c3e6d3;
 }
 
-/* ============================================
-   AUTH PROMPT STYLES
-   ============================================ */
 .auth-prompt {
   margin: 2rem 0;
   padding: 1.5rem;
@@ -433,9 +571,6 @@ body {
   text-decoration: underline;
 }
 
-/* ============================================
-   DATA TABLE STYLES
-   ============================================ */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -491,9 +626,6 @@ body {
   color: white;
 }
 
-/* ============================================
-     FORM STYLES
-     ============================================ */
 .form-container {
   max-width: 800px;
   margin: 0 auto;
@@ -533,9 +665,6 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* ============================================
-     DETAILS PAGE STYLES
-     ============================================ */
 .details-container {
   max-width: 800px;
   margin: 0 auto;
@@ -598,7 +727,6 @@ body {
   font-size: 1.1rem;
 }
 
-/* Back navigation */
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -613,7 +741,6 @@ body {
   color: var(--primary-color);
 }
 
-/* Messages */
 .message-container {
   margin-bottom: 1.5rem;
 }
@@ -635,67 +762,4 @@ body {
   background-color: #fae2e2;
   color: var(--danger-color);
   border: 1px solid #fbc7c7;
-}
-
-/* ============================================
-     RESPONSIVE STYLES
-     ============================================ */
-@media (max-width: 768px) {
-  .main-header {
-    flex-direction: column;
-    padding: 1rem;
-  }
-
-  .logo-container {
-    margin-bottom: 1rem;
-  }
-
-  .main-nav ul {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .main-nav li {
-    margin: 0.5rem;
-  }
-
-  .auth-buttons {
-    margin-top: 1rem;
-  }
-
-  .footer-content {
-    flex-direction: column;
-  }
-
-  .about-content {
-    flex-direction: column;
-  }
-
-  .about-image {
-    order: -1;
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero {
-    padding: 3rem 1rem;
-  }
-
-  .hero h1 {
-    font-size: 2.5rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .container {
-    padding: 0 1rem;
-  }
-
-  .section-title {
-    font-size: 2rem;
-  }
-
-  .featured-grid {
-    grid-template-columns: 1fr;
-  }
 }

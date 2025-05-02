@@ -13,8 +13,8 @@
                     <div class="auth-prompt">
                         <p class="auth-message">Para comprar ingressos e explorar nosso conteúdo completo, por favor, faça login ou crie uma conta</p>
                         <div class="auth-buttons-large">
-                            <a href="${pageContext.request.contextPath}/api/auth/login" class="btn btn-primary btn-large">Login</a>
-                            <a href="${pageContext.request.contextPath}/api/auth/register" class="btn btn-outline btn-large">Registrar</a>
+                            <a href="${pageContext.request.contextPath}/auth/login" class="btn btn-primary btn-large">Login</a>
+                            <a href="${pageContext.request.contextPath}/auth/register" class="btn btn-outline btn-large">Registrar</a>
                         </div>
                     </div>
                 </c:when>
@@ -58,7 +58,7 @@
 
                     <c:choose>
                         <c:when test="${empty sessionScope.user}">
-                            <p class="auth-hint">Por favor, <a href="${pageContext.request.contextPath}/api/auth/login">faça login</a> para saber mais sobre nossos esforços de conservação.</p>
+                            <p class="auth-hint">Por favor, <a href="${pageContext.request.contextPath}/auth/login">faça login</a> para saber mais sobre nossos esforços de conservação.</p>
                         </c:when>
                         <c:otherwise>
                             <a href="${pageContext.request.contextPath}/about" class="btn btn-outline">Saiba Mais</a>

@@ -3,7 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +15,14 @@
     <div class="page-wrapper">
         <c:import url="/WEB-INF/components/header.jsp" />
         
+        <c:if test="${not empty sessionScope.user}">
+            <c:import url="/WEB-INF/components/menu.jsp" />
+        </c:if>
+        
         <main class="main-content">
-            <jsp:doBody />
+            <div class="container">
+                <jsp:doBody />
+            </div>
         </main>
         
         <c:import url="/WEB-INF/components/footer.jsp" />

@@ -3,29 +3,41 @@
 
 <header class="main-header">
     <div class="logo-container">
-        <a href="${pageContext.request.contextPath}/" class="logo">Zoo Park</a>
+        <a href="${pageContext.request.contextPath}/" class="logo">🦁 Zoo Park</a>
     </div>
 
     <nav class="main-nav">
         <ul>
-            <li><a href="${pageContext.request.contextPath}/">Início</a></li>
-            <li><a href="${pageContext.request.contextPath}/animals">Animais</a></li>
-            <li><a href="${pageContext.request.contextPath}/tickets">Ingressos</a></li>
-            <li><a href="${pageContext.request.contextPath}/about">Sobre</a></li>
-            <li><a href="${pageContext.request.contextPath}/contact">Contato</a></li>
+            <li><a href="${pageContext.request.contextPath}/"><i class="menu-icon">🏠</i> Início</a></li>
+            <li><a href="${pageContext.request.contextPath}/animal/galeria"><i class="menu-icon">🦊</i> Animais</a></li>
+            <c:if test="${not empty sessionScope.user}">
+                <li>
+                    <a href="${pageContext.request.contextPath}/dashboard" class="dashboard-link">
+                        <i class="menu-icon">📊</i> Dashboard
+                    </a>
+                </li>
+            </c:if>
+            <li><a href="${pageContext.request.contextPath}/about"><i class="menu-icon">ℹ️</i> Sobre</a></li>
+            <li><a href="${pageContext.request.contextPath}/contact"><i class="menu-icon">📞</i> Contato</a></li>
         </ul>
     </nav>
 
     <div class="auth-buttons">
         <c:choose>
             <c:when test="${empty sessionScope.user}">
-                <a href="${pageContext.request.contextPath}/auth/login" class="btn btn-outline">Login</a>
-                <a href="${pageContext.request.contextPath}/auth/register" class="btn btn-primary">Registrar</a>
+                <a href="${pageContext.request.contextPath}/auth/login" class="btn btn-outline">
+                    <i class="menu-icon">🔑</i> Login
+                </a>
+                <a href="${pageContext.request.contextPath}/auth/register" class="btn btn-primary">
+                    <i class="menu-icon">📝</i> Registrar
+                </a>
             </c:when>
             <c:otherwise>
                 <div class="user-menu">
-                    <span>Bem-vindo(a), ${sessionScope.user.nome}</span>
-                    <a href="${pageContext.request.contextPath}/auth/logout" class="btn btn-outline">Sair</a>
+                    <span><i class="menu-icon">👤</i> Bem-vindo(a), ${sessionScope.user.nome}</span>
+                    <a href="${pageContext.request.contextPath}/auth/logout" class="btn btn-outline">
+                        <i class="menu-icon">🚪</i> Sair
+                    </a>
                 </div>
             </c:otherwise>
         </c:choose>
