@@ -19,11 +19,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const menuLinks = document.querySelectorAll(".menu-items a");
 
     menuLinks.forEach((link) => {
+      link.classList.remove("active");
+    });
+
+    let bestMatch = null;
+    let longestMatch = 0;
+
+    menuLinks.forEach((link) => {
       const linkPath = link.getAttribute("href");
       if (linkPath && currentPath.includes(linkPath)) {
-        link.classList.add("active");
+        if (linkPath.length > longestMatch) {
+          longestMatch = linkPath.length;
+          bestMatch = link;
+        }
       }
     });
+
+    if (bestMatch) {
+      bestMatch.classList.add("active");
+    }
   };
 
   const enhanceMenuInteractions = function () {
