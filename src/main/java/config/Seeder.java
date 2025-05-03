@@ -81,28 +81,30 @@ public class Seeder {
     for (Habitat h : habitats)
       em.persist(h);
 
-    // Animais realistas (ajustados para os enums)
+    // Animais realistas (corrigido: nome, especie, nomeCientifico)
     Animal[] animais = {
-        Animal.create("Leão", "Panthera leo", "Leão", Classe.MAMIFERO, Genero.MASCULINO, StatusSaude.SAUDAVEL,
+        Animal.create("Leão", "Leão", "Panthera leo", Classe.MAMIFERO, Genero.MASCULINO, StatusSaude.SAUDAVEL,
             "Saudável", LocalDate.of(2020, 3, 15), habitats[0]),
-        Animal.create("Elefante Africano", "Loxodonta africana", "Elefante", Classe.MAMIFERO, Genero.FEMININO,
+        Animal.create("Elefante Africano", "Elefante Africano", "Loxodonta africana", Classe.MAMIFERO, Genero.FEMININO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2018, 7, 10), habitats[0]),
-        Animal.create("Arara Azul", "Anodorhynchus hyacinthinus", "Arara", Classe.AVE, Genero.FEMININO,
+        Animal.create("Arara Azul", "Arara Azul", "Anodorhynchus hyacinthinus", Classe.AVE, Genero.FEMININO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2021, 1, 5), habitats[1]),
-        Animal.create("Jacaré-do-Pantanal", "Caiman yacare", "Jacaré", Classe.REPTIL, Genero.MASCULINO,
+        Animal.create("Jacaré-do-Pantanal", "Jacaré-do-Pantanal", "Caiman yacare", Classe.REPTIL, Genero.MASCULINO,
             StatusSaude.EM_TRATAMENTO, "Ferimento na pata", LocalDate.of(2019, 11, 20), habitats[2]),
-        Animal.create("Tubarão Branco", "Carcharodon carcharias", "Tubarão", Classe.PEIXE, Genero.MASCULINO,
+        Animal.create("Tubarão Branco", "Tubarão Branco", "Carcharodon carcharias", Classe.PEIXE, Genero.MASCULINO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2022, 6, 30), habitats[5]),
-        Animal.create("Pinguim-de-Magalhães", "Spheniscus magellanicus", "Pinguim", Classe.AVE, Genero.FEMININO,
+        Animal.create("Pinguim-de-Magalhães", "Pinguim-de-Magalhães", "Spheniscus magellanicus", Classe.AVE,
+            Genero.FEMININO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2020, 9, 12), habitats[5]),
-        Animal.create("Cobra Sucuri", "Eunectes murinus", "Sucuri", Classe.REPTIL, Genero.FEMININO,
+        Animal.create("Cobra Sucuri", "Sucuri", "Eunectes murinus", Classe.REPTIL, Genero.FEMININO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2017, 4, 18), habitats[2]),
-        Animal.create("Águia Harpia", "Harpia harpyja", "Harpia", Classe.AVE, Genero.MASCULINO, StatusSaude.SAUDAVEL,
+        Animal.create("Águia Harpia", "Águia Harpia", "Harpia harpyja", Classe.AVE, Genero.MASCULINO,
+            StatusSaude.SAUDAVEL,
             "Saudável", LocalDate.of(2021, 8, 22), habitats[4]),
-        Animal.create("Camelo", "Camelus dromedarius", "Camelo", Classe.MAMIFERO, Genero.MASCULINO,
+        Animal.create("Camelo", "Camelo", "Camelus dromedarius", Classe.MAMIFERO, Genero.MASCULINO,
             StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2016, 2, 14), habitats[3]),
-        Animal.create("Tartaruga-da-Amazônia", "Podocnemis expansa", "Tartaruga", Classe.REPTIL, Genero.FEMININO,
-            StatusSaude.EM_TRATAMENTO, "Casco rachado", LocalDate.of(2018, 12, 1), habitats[2])
+        Animal.create("Tartaruga-da-Amazônia", "Tartaruga-da-Amazônia", "Podocnemis expansa", Classe.REPTIL,
+            Genero.FEMININO, StatusSaude.EM_TRATAMENTO, "Casco rachado", LocalDate.of(2018, 12, 1), habitats[2])
     };
     for (Animal a : animais)
       em.persist(a);
