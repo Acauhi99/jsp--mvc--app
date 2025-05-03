@@ -15,17 +15,16 @@
 <body>
     <div class="page-wrapper">
         <c:import url="/WEB-INF/components/header.jsp" />
-        
-        <c:if test="${not empty sessionScope.user}">
-            <c:import url="/WEB-INF/components/menu.jsp" />
-        </c:if>
-        
-        <main class="main-content">
-            <div class="container">
-                <jsp:doBody />
-            </div>
-        </main>
-        
+        <div class="content-container">
+            <c:if test="${not empty sessionScope.user}">
+                <c:import url="/WEB-INF/components/menu.jsp" />
+            </c:if>
+            <main class="main-content">
+                <div class="container">
+                    <jsp:doBody />
+                </div>
+            </main>
+        </div>
         <c:import url="/WEB-INF/components/footer.jsp" />
     </div>
 </body>
