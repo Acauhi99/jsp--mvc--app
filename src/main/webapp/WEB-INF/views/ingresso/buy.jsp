@@ -4,7 +4,8 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="t" %>
 <t:master title="Comprar Ingresso">
     <div class="form-container">
-        <div class="form-header">
+        <div class="form-header" style="text-align:center;">
+            <span class="ticket-emoji">🎟️</span>
             <h1>Comprar Ingresso</h1>
         </div>
         <form action="${pageContext.request.contextPath}/ingresso/comprar" method="post" class="auth-form">

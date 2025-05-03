@@ -36,10 +36,15 @@
                 <c:otherwise>
                     <c:forEach var="animal" items="${animais}">
                         <div class="animal-card">
+                            <div class="animal-image" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;">
+                                🐾
+                            </div>
                             <h3>${animal.nome}</h3>
                             <p><strong>Espécie:</strong> ${animal.especie}</p>
                             <p><strong>Habitat:</strong> ${animal.habitat.nome}</p>
-                            <a href="${pageContext.request.contextPath}/animal/detalhes?id=${animal.id}" class="btn btn-sm btn-outline">Ver detalhes</a>
+                            <div class="animal-card-footer">
+                                <a href="${pageContext.request.contextPath}/animal/detalhes?id=${animal.id}" class="btn btn-sm btn-outline">Ver detalhes</a>
+                            </div>
                         </div>
                     </c:forEach>
                 </c:otherwise>

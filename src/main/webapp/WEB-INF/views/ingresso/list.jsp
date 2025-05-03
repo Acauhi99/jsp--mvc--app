@@ -68,7 +68,7 @@
                                 <td>
                                     <c:choose>
                                         <c:when test="${ingresso.utilizado}">
-                                            <span class="success-message">Utilizado</span>
+                                            <span class="error-message">Utilizado</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="alert-success">Disponível</span>

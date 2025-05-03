@@ -5,7 +5,16 @@
     <nav class="dashboard-menu">
         <div class="container">
             <div class="menu-header">
-                <h3>Painel de Controle: ${sessionScope.user.role}</h3>
+                <h3 class="menu-title
+                    <c:choose>
+                        <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}"> admin</c:when>
+                        <c:when test="${sessionScope.user.role eq 'FUNCIONARIO' || sessionScope.user.role eq 'VETERINARIO' || sessionScope.user.role eq 'TRATADOR' || sessionScope.user.role eq 'MANUTENCAO'}"> funcionario</c:when>
+                        <c:when test="${sessionScope.user.role eq 'VISITANTE'}"> visitante</c:when>
+                        <c:otherwise> outro</c:otherwise>
+                    </c:choose>
+                ">
+                    Painel de Controle: ${sessionScope.user.role}
+                </h3>
             </div>
             
             <div class="menu-items">

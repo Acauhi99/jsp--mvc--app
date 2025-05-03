@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <t:master title="Habitats do Zoológico">
@@ -22,12 +22,20 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="habitat" items="${habitats}">
-                        <div class="animal-card">
+                        <div class="animal-card habitat-card">
+                            <div class="habitat-image">
+                                <span class="habitat-icon">🌍</span>
+                            </div>
                             <h3>${habitat.nome}</h3>
                             <p><strong>Tipo de Ambiente:</strong> ${habitat.tipoAmbiente}</p>
                             <p><strong>Tamanho:</strong> ${habitat.tamanho} m²</p>
                             <p><strong>Capacidade Máxima:</strong> ${habitat.capacidadeMaximaAnimais} animais</p>
-                            <p><strong>Público Acessível:</strong> <c:choose><c:when test="${habitat.publicoAcessivel}">Sim</c:when><c:otherwise>Não</c:otherwise></c:choose></p>
+                            <p><strong>Público Acessível:</strong>
+                                <c:choose>
+                                    <c:when test="${habitat.publicoAcessivel}">Sim</c:when>
+                                    <c:otherwise>Não</c:otherwise>
+                                </c:choose>
+                            </p>
                         </div>
                     </c:forEach>
                 </c:otherwise>
