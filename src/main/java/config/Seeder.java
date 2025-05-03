@@ -11,6 +11,8 @@ import models.Funcionario.Cargo;
 import models.Habitat.TipoAmbiente;
 import models.ManutencaoHabitat.PrioridadeManutencao;
 import models.ManutencaoHabitat.TipoManutencao;
+import models.ManutencaoHabitat.StatusManutencao;
+import models.Ingresso.TipoIngresso;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,6 +24,13 @@ public class Seeder {
     EntityManager em = emf.createEntityManager();
 
     em.getTransaction().begin();
+
+    // Limpar tabelas (exceto Customer e Funcionario)
+    em.createQuery("DELETE FROM Alimentacao").executeUpdate();
+    em.createQuery("DELETE FROM ConsultaVeterinaria").executeUpdate();
+    em.createQuery("DELETE FROM ManutencaoHabitat").executeUpdate();
+    em.createQuery("DELETE FROM Animal").executeUpdate();
+    em.createQuery("DELETE FROM Habitat").executeUpdate();
 
     // Usuários já existentes (IDs fixos)
     Customer visitante = em.find(Customer.class, UUID.fromString("05e81bf8-03ee-449b-a443-98301d6c9ea0"));
@@ -60,85 +69,97 @@ public class Seeder {
       em.persist(manutencao);
     }
 
-    // Habitats
-    List<Habitat> habitats = new ArrayList<>();
-    for (TipoAmbiente tipo : TipoAmbiente.values()) {
-      Habitat h = Habitat.create(
-          tipo.name() + " Habitat",
-          tipo,
-          500 + new Random().nextInt(500),
-          10 + new Random().nextInt(10),
-          true);
+    // Habitats realistas (ajustados para os tipos do enum)
+    Habitat[] habitats = {
+        Habitat.create("Savana Africana", TipoAmbiente.SAVANA, 1200, 15, true),
+        Habitat.create("Floresta Amazônica", TipoAmbiente.FLORESTA, 900, 12, true),
+        Habitat.create("Pantanal", TipoAmbiente.PANTANAL, 800, 10, true),
+        Habitat.create("Deserto do Saara", TipoAmbiente.DESERTO, 700, 8, false),
+        Habitat.create("Montanhas Rochosas", TipoAmbiente.MONTANHA, 500, 20, true),
+        Habitat.create("Aquário Oceânico", TipoAmbiente.AQUATICO, 600, 25, true)
+    };
+    for (Habitat h : habitats)
       em.persist(h);
-      habitats.add(h);
-    }
 
-    // Animais
-    List<Animal> animais = new ArrayList<>();
-    for (int i = 1; i <= 20; i++) {
-      Classe classe = Classe.values()[i % Classe.values().length];
-      Genero genero = (i % 2 == 0) ? Genero.MASCULINO : Genero.FEMININO;
-      StatusSaude status = (i % 3 == 0) ? StatusSaude.EM_TRATAMENTO : StatusSaude.SAUDAVEL;
-      Habitat habitat = habitats.get(i % habitats.size());
-      Animal a = Animal.create(
-          "Animal " + i,
-          "Especie " + ((i % 5) + 1),
-          "NomeCientifico" + i,
-          classe,
-          genero,
-          status,
-          status == StatusSaude.EM_TRATAMENTO ? "Em observação" : "Saudável",
-          LocalDate.now().minusDays(i * 10),
-          habitat);
+    // Animais realistas (ajustados para os enums)
+    Animal[] animais = {
+        Animal.create("Leão", "Panthera leo", "Leão", Classe.MAMIFERO, Genero.MASCULINO, StatusSaude.SAUDAVEL,
+            "Saudável", LocalDate.of(2020, 3, 15), habitats[0]),
+        Animal.create("Elefante Africano", "Loxodonta africana", "Elefante", Classe.MAMIFERO, Genero.FEMININO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2018, 7, 10), habitats[0]),
+        Animal.create("Arara Azul", "Anodorhynchus hyacinthinus", "Arara", Classe.AVE, Genero.FEMININO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2021, 1, 5), habitats[1]),
+        Animal.create("Jacaré-do-Pantanal", "Caiman yacare", "Jacaré", Classe.REPTIL, Genero.MASCULINO,
+            StatusSaude.EM_TRATAMENTO, "Ferimento na pata", LocalDate.of(2019, 11, 20), habitats[2]),
+        Animal.create("Tubarão Branco", "Carcharodon carcharias", "Tubarão", Classe.PEIXE, Genero.MASCULINO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2022, 6, 30), habitats[5]),
+        Animal.create("Pinguim-de-Magalhães", "Spheniscus magellanicus", "Pinguim", Classe.AVE, Genero.FEMININO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2020, 9, 12), habitats[5]),
+        Animal.create("Cobra Sucuri", "Eunectes murinus", "Sucuri", Classe.REPTIL, Genero.FEMININO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2017, 4, 18), habitats[2]),
+        Animal.create("Águia Harpia", "Harpia harpyja", "Harpia", Classe.AVE, Genero.MASCULINO, StatusSaude.SAUDAVEL,
+            "Saudável", LocalDate.of(2021, 8, 22), habitats[4]),
+        Animal.create("Camelo", "Camelus dromedarius", "Camelo", Classe.MAMIFERO, Genero.MASCULINO,
+            StatusSaude.SAUDAVEL, "Saudável", LocalDate.of(2016, 2, 14), habitats[3]),
+        Animal.create("Tartaruga-da-Amazônia", "Podocnemis expansa", "Tartaruga", Classe.REPTIL, Genero.FEMININO,
+            StatusSaude.EM_TRATAMENTO, "Casco rachado", LocalDate.of(2018, 12, 1), habitats[2])
+    };
+    for (Animal a : animais)
       em.persist(a);
-      animais.add(a);
-    }
 
-    // Alimentações
+    // Alimentações realistas
     for (Animal a : animais) {
-      for (int j = 0; j < 3; j++) {
-        Alimentacao ali = Alimentacao.create(
-            a,
-            "Alimento " + ((j % 4) + 1),
-            2.0 + j,
-            "kg",
-            LocalDateTime.now().minusDays(j),
-            tratador,
-            "Observação " + j);
-        em.persist(ali);
-      }
+      Alimentacao ali = Alimentacao.create(
+          a,
+          a.getClasse() == Classe.MAMIFERO ? "Frutas e carne" : "Peixes e vegetais",
+          3.0,
+          "kg",
+          LocalDateTime.now().minusDays(1),
+          tratador,
+          "Alimentação regular");
+      em.persist(ali);
     }
 
-    // Consultas Veterinárias
+    // Consultas Veterinárias realistas
     for (Animal a : animais) {
       if (a.getStatusSaude() == StatusSaude.EM_TRATAMENTO) {
         ConsultaVeterinaria c = ConsultaVeterinaria.create(
             a,
             veterinario,
-            LocalDateTime.now().minusDays(5),
-            "Diagnóstico para " + a.getNome(),
-            "Tratamento padrão",
-            "Medicamento X",
+            LocalDateTime.now().minusDays(3),
+            "Avaliação de ferimento",
+            "Curativo e antibiótico",
+            "Antibiótico tópico",
             true,
-            LocalDateTime.now().plusDays(10),
-            "Acompanhamento necessário");
+            LocalDateTime.now().plusDays(7),
+            "Revisão em uma semana");
         em.persist(c);
       }
     }
 
-    // Manutenções de Habitat
+    // Manutenções de Habitat realistas
     for (Habitat h : habitats) {
-      for (int k = 0; k < 2; k++) {
-        ManutencaoHabitat m = ManutencaoHabitat.create(
-            h,
-            TipoManutencao.values()[k % TipoManutencao.values().length],
-            LocalDateTime.now().minusDays(k * 7),
-            LocalDateTime.now().plusDays(k * 7),
-            "Manutenção " + k + " para " + h.getNome(),
-            PrioridadeManutencao.values()[k % PrioridadeManutencao.values().length],
-            manutencao);
-        em.persist(m);
-      }
+      ManutencaoHabitat m = new ManutencaoHabitat(
+          h,
+          TipoManutencao.LIMPEZA,
+          LocalDateTime.now().minusDays(2),
+          LocalDateTime.now().plusDays(2),
+          StatusManutencao.PENDENTE,
+          "Limpeza geral do recinto",
+          PrioridadeManutencao.MEDIA,
+          manutencao,
+          null);
+      em.persist(m);
+    }
+
+    // Ingressos para o visitante
+    for (int i = 0; i < 3; i++) {
+      Ingresso ingresso = Ingresso.create(
+          TipoIngresso.ADULTO,
+          50.0,
+          visitante);
+      ingresso.setUtilizado(i == 0); // Marca o primeiro como utilizado
+      em.persist(ingresso);
     }
 
     em.getTransaction().commit();
