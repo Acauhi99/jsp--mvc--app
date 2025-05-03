@@ -14,7 +14,7 @@
                     <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}">
                         <a href="${pageContext.request.contextPath}/dashboard/admin"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦊</i> Animais</a>
-                        <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏞️</i> Habitats</a>
+                        <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
                         <a href="${pageContext.request.contextPath}/funcionario"><i class="menu-icon">👨‍💼</i> Funcionários</a>
                         
                         <span class="separator"></span>
@@ -49,7 +49,7 @@
                     <%-- Menu para Equipe de Manutenção --%>
                     <c:when test="${sessionScope.user.role eq 'MANUTENCAO'}">
                         <a href="${pageContext.request.contextPath}/dashboard/funcionario"><i class="menu-icon">📊</i> Dashboard</a>
-                        <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏞️</i> Habitats</a>
+                        <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
                         
                         <span class="separator"></span>
                         
@@ -61,16 +61,11 @@
                     <c:when test="${sessionScope.user.role eq 'VISITANTE'}">
                         <a href="${pageContext.request.contextPath}/dashboard/visitor"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/animal/galeria"><i class="menu-icon">🦁</i> Animais</a>
+                        <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
                         <span class="separator"></span>
                         <a href="${pageContext.request.contextPath}/ingresso"><i class="menu-icon">🎟️</i> Meus Ingressos</a>
                         <a href="${pageContext.request.contextPath}/ingresso/comprar"><i class="menu-icon">🛒</i> Comprar</a>
                     </c:when>
-                    
-                    <%-- Menu padrão para outros funcionários --%>
-                    <c:otherwise>
-                        <a href="${pageContext.request.contextPath}/dashboard"><i class="menu-icon">🏠</i> Dashboard</a>
-                        <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦁</i> Animais</a>
-                    </c:otherwise>
                 </c:choose>
                 
                 <a href="${pageContext.request.contextPath}/perfil" class="profile-link"><i class="menu-icon">👤</i> Perfil</a>
