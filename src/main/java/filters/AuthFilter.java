@@ -16,15 +16,16 @@ public class AuthFilter implements Filter {
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
             "/",
             "/index.jsp",
+            "/mapa",
+            "/mapa.jsp",
             "/views/index.jsp",
             "/auth/login",
             "/auth/register",
             "/about",
-            "/contact", 
+            "/contact",
             "/css/*",
             "/js/*",
-            "/images/*"
-    );
+            "/images/*");
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

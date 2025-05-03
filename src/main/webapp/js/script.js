@@ -62,7 +62,23 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
+  const initMapaZoom = function () {
+    const zoomContainer = document.querySelector(".mapa-zoom-container");
+    if (zoomContainer) {
+      zoomContainer.addEventListener("click", function (e) {
+        e.preventDefault();
+        zoomContainer.classList.toggle("zoomed");
+      });
+      document.addEventListener("click", function (e) {
+        if (!zoomContainer.contains(e.target)) {
+          zoomContainer.classList.remove("zoomed");
+        }
+      });
+    }
+  };
+
   initRegistroForm();
   highlightActiveMenuItem();
   enhanceMenuInteractions();
+  initMapaZoom();
 });

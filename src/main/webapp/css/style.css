@@ -793,3 +793,30 @@ body {
   color: var(--danger-color);
   border: 1px solid #fbc7c7;
 }
+
+.mapa-zoom-container {
+  display: inline-block;
+  position: relative;
+  cursor: zoom-in;
+  transition: box-shadow 0.2s;
+  outline: none;
+}
+
+.mapa-zoom-container.zoomed {
+  z-index: 10;
+}
+
+.mapa-zoom-container .mapa-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  transition: transform 0.25s cubic-bezier(0.4, 2, 0.6, 1), box-shadow 0.2s;
+}
+
+.mapa-zoom-container.zoomed .mapa-img {
+  transform: scale(1.7);
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  cursor: zoom-out;
+}
