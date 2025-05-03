@@ -61,10 +61,7 @@
                     <c:when test="${sessionScope.user.role eq 'VISITANTE'}">
                         <a href="${pageContext.request.contextPath}/dashboard/visitor"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/animal/galeria"><i class="menu-icon">🦁</i> Animais</a>
-                        <a href="${pageContext.request.contextPath}/habitat/mapa"><i class="menu-icon">🗺️</i> Mapa</a>
-                        
                         <span class="separator"></span>
-                        
                         <a href="${pageContext.request.contextPath}/ingresso"><i class="menu-icon">🎟️</i> Meus Ingressos</a>
                         <a href="${pageContext.request.contextPath}/ingresso/comprar"><i class="menu-icon">🛒</i> Comprar</a>
                     </c:when>

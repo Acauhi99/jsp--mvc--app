@@ -9,7 +9,7 @@
     <nav class="main-nav">
         <ul>
             <li><a href="${pageContext.request.contextPath}/"><i class="menu-icon">🏠</i> Início</a></li>
-            <li><a href="${pageContext.request.contextPath}/animal/galeria"><i class="menu-icon">🦊</i> Animais</a></li>
+            <li><a href="${pageContext.request.contextPath}/mapa"><i class="menu-icon">🗺️</i> Mapa</a></li>
             <c:if test="${not empty sessionScope.user}">
                 <li>
                     <a href="${pageContext.request.contextPath}/dashboard" class="dashboard-link">
