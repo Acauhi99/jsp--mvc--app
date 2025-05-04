@@ -11,13 +11,8 @@ import java.io.IOException;
 public class HomeServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.getWriter().println("Error: " + e.getMessage());
-        }
+        request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
     }
 }

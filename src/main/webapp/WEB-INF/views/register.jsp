@@ -48,7 +48,6 @@
                             <select id="cargo" name="cargo">
                                 <option value="ADMINISTRADOR">Administrador</option>
                                 <option value="VETERINARIO">Veterinário</option>
-                                <option value="TRATADOR">Tratador</option>
                                 <option value="MANUTENCAO">Manutenção</option>
                             </select>
                         </div>

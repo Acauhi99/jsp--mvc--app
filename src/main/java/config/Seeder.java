@@ -9,8 +9,6 @@ import models.Animal.Genero;
 import models.Animal.StatusSaude;
 import models.Funcionario.Cargo;
 import models.Habitat.TipoAmbiente;
-import models.ManutencaoHabitat.PrioridadeManutencao;
-import models.ManutencaoHabitat.TipoManutencao;
 import models.ManutencaoHabitat.StatusManutencao;
 import models.Ingresso.TipoIngresso;
 
@@ -36,7 +34,6 @@ public class Seeder {
     Customer visitante = em.find(Customer.class, UUID.fromString("05e81bf8-03ee-449b-a443-98301d6c9ea0"));
     Funcionario admin = em.find(Funcionario.class, UUID.fromString("12ad950a-0967-4ced-ace4-3d38b1dbbde7"));
     Funcionario veterinario = em.find(Funcionario.class, UUID.fromString("89ffea78-564c-409c-80ff-ebf2bc9b61bf"));
-    Funcionario tratador = em.find(Funcionario.class, UUID.fromString("a425a2da-ebe4-4548-943e-a5840cbec40d"));
     Funcionario manutencao = em.find(Funcionario.class, UUID.fromString("104d0d21-d433-45fd-80ec-b9f791931580"));
 
     // Se não existirem, crie-os (ajuste conforme seu construtor)
@@ -57,11 +54,6 @@ public class Seeder {
       veterinario = Funcionario.create("Veterinario", "veterinario@veterinario.com", "123", Cargo.VETERINARIO);
       veterinario.setId(UUID.fromString("89ffea78-564c-409c-80ff-ebf2bc9b61bf"));
       em.persist(veterinario);
-    }
-    if (tratador == null) {
-      tratador = Funcionario.create("Tratador", "tratador@tratador.com", "123", Cargo.TRATADOR);
-      tratador.setId(UUID.fromString("a425a2da-ebe4-4548-943e-a5840cbec40d"));
-      em.persist(tratador);
     }
     if (manutencao == null) {
       manutencao = Funcionario.create("Manutencao", "manutencao@manutencao.com", "123", Cargo.MANUTENCAO);
@@ -117,7 +109,7 @@ public class Seeder {
           3.0,
           "kg",
           LocalDateTime.now().minusDays(1),
-          tratador,
+          veterinario,
           "Alimentação regular");
       em.persist(ali);
     }
@@ -139,19 +131,39 @@ public class Seeder {
       }
     }
 
-    // Manutenções de Habitat realistas
+    // Manutenções de Habitat realistas (uma de cada tipo/status/prioridade)
+    ManutencaoHabitat.TipoManutencao[] tipos = ManutencaoHabitat.TipoManutencao.values();
+    ManutencaoHabitat.StatusManutencao[] statusArr = ManutencaoHabitat.StatusManutencao.values();
+    ManutencaoHabitat.PrioridadeManutencao[] prioridades = ManutencaoHabitat.PrioridadeManutencao.values();
+
+    int idx = 0;
     for (Habitat h : habitats) {
+      // Garante que teremos pelo menos uma de cada tipo/status/prioridade
+      ManutencaoHabitat.TipoManutencao tipo = tipos[idx % tipos.length];
+      ManutencaoHabitat.StatusManutencao status = statusArr[idx % statusArr.length];
+      ManutencaoHabitat.PrioridadeManutencao prioridade = prioridades[idx % prioridades.length];
+
+      LocalDateTime dataSolicitacao = LocalDateTime.now().minusDays(2 + idx);
+      LocalDateTime dataProgramada = LocalDateTime.now().plusDays(2 + idx);
+      LocalDateTime dataConclusao = (status == StatusManutencao.CONCLUIDA) ? LocalDateTime.now().minusDays(1) : null;
+      Funcionario responsavel = manutencao;
+
       ManutencaoHabitat m = new ManutencaoHabitat(
           h,
-          TipoManutencao.LIMPEZA,
-          LocalDateTime.now().minusDays(2),
-          LocalDateTime.now().plusDays(2),
-          StatusManutencao.PENDENTE,
-          "Limpeza geral do recinto",
-          PrioridadeManutencao.MEDIA,
+          tipo,
+          dataSolicitacao,
+          dataProgramada,
+          status,
+          "Solicitação de " + tipo.name().toLowerCase().replace('_', ' '),
+          prioridade,
           manutencao,
-          null);
+          responsavel);
+      if (status == StatusManutencao.CONCLUIDA) {
+        m.setDataConclusao(dataConclusao);
+        m.setObservacaoConclusao("Serviço concluído com sucesso.");
+      }
       em.persist(m);
+      idx++;
     }
 
     // Ingressos para o visitante
@@ -160,7 +172,7 @@ public class Seeder {
           TipoIngresso.ADULTO,
           50.0,
           visitante);
-      ingresso.setUtilizado(i == 0); // Marca o primeiro como utilizado
+      ingresso.setUtilizado(i == 0);
       em.persist(ingresso);
     }
 

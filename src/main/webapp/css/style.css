@@ -808,3 +808,91 @@ body {
   justify-content: center;
   box-shadow: var(--box-shadow);
 }
+
+.manutencao-dashboard {
+  margin: 2rem 0;
+}
+.dashboard-summary {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.summary-card {
+  background: #f7f7f7;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 160px;
+}
+.summary-icon {
+  font-size: 2rem;
+}
+.summary-title {
+  font-size: 1.1rem;
+  color: #666;
+}
+.summary-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+.summary-card.open {
+  border-left: 5px solid #f39c12;
+}
+.summary-card.andamento {
+  border-left: 5px solid #f1c40f;
+}
+.summary-card.concluida {
+  border-left: 5px solid #2ecc71;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.badge-PENDENTE,
+.badge-ABERTA {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+.badge-EM_ANDAMENTO {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+.badge-CONCLUIDA {
+  background: #e3f4eb;
+  color: #2ecc71;
+  border: 1px solid #c3e6d3;
+}
+.badge-CANCELADA {
+  background: #fae2e2;
+  color: #e74c3c;
+  border: 1px solid #fbc7c7;
+}
+.badge-prio-BAIXA {
+  background: #eafaf1;
+  color: #27ae60;
+  border: 1px solid #b7e4c7;
+}
+.badge-prio-MEDIA {
+  background: #f9f7e8;
+  color: #f39c12;
+  border: 1px solid #ffe082;
+}
+.badge-prio-ALTA {
+  background: #fff3cd;
+  color: #e67e22;
+  border: 1px solid #ffd59e;
+}
+.badge-prio-URGENTE {
+  background: #fae2e2;
+  color: #e74c3c;
+  border: 1px solid #fbc7c7;
+}

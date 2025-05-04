@@ -8,7 +8,7 @@
                 <h3 class="menu-title
                     <c:choose>
                         <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}"> admin</c:when>
-                        <c:when test="${sessionScope.user.role eq 'FUNCIONARIO' || sessionScope.user.role eq 'VETERINARIO' || sessionScope.user.role eq 'TRATADOR' || sessionScope.user.role eq 'MANUTENCAO'}"> funcionario</c:when>
+                        <c:when test="${sessionScope.user.role eq 'FUNCIONARIO' || sessionScope.user.role eq 'VETERINARIO' || sessionScope.user.role eq 'MANUTENCAO'}"> funcionario</c:when>
                         <c:when test="${sessionScope.user.role eq 'VISITANTE'}"> visitante</c:when>
                         <c:otherwise> outro</c:otherwise>
                     </c:choose>
@@ -44,17 +44,6 @@
                         <a href="${pageContext.request.contextPath}/consulta/historico"><i class="menu-icon">📋</i> Histórico</a>
                     </c:when>
                     
-                    <%-- Menu para Tratadores --%>
-                    <c:when test="${sessionScope.user.role eq 'TRATADOR'}">
-                        <a href="${pageContext.request.contextPath}/dashboard/funcionario"><i class="menu-icon">📊</i> Dashboard</a>
-                        <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦁</i> Animais</a>
-                        
-                        <span class="separator"></span>
-                        
-                        <a href="${pageContext.request.contextPath}/alimentacao"><i class="menu-icon">🍽️</i> Alimentação</a>
-                        <a href="${pageContext.request.contextPath}/alimentacao/historico"><i class="menu-icon">📋</i> Histórico</a>
-                    </c:when>
-                    
                     <%-- Menu para Equipe de Manutenção --%>
                     <c:when test="${sessionScope.user.role eq 'MANUTENCAO'}">
                         <a href="${pageContext.request.contextPath}/dashboard/funcionario"><i class="menu-icon">📊</i> Dashboard</a>
@@ -63,7 +52,6 @@
                         <span class="separator"></span>
                         
                         <a href="${pageContext.request.contextPath}/manutencao"><i class="menu-icon">🔧</i> Solicitações</a>
-                        <a href="${pageContext.request.contextPath}/manutencao/programada"><i class="menu-icon">📅</i> Programadas</a>
                     </c:when>
                     
                     <%-- Menu para Visitantes --%>
