@@ -927,6 +927,32 @@ body {
   color: #e74c3c;
   border: 1px solid #fbc7c7;
 }
+.badge-AGENDADA {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+.badge-EMERGENCIA {
+  background: #fae2e2;
+  color: #e74c3c;
+  border: 1px solid #fbc7c7;
+}
+
+.timeline-marker {
+  z-index: 1;
+  border: 3px solid white;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.animal-info strong {
+  font-weight: 600;
+  color: #555;
+}
 
 .action-buttons {
   display: flex;

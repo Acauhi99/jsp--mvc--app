@@ -115,20 +115,113 @@ public class Seeder {
     }
 
     // Consultas Veterinárias realistas
+    // 1. Consultas para animais em tratamento
     for (Animal a : animais) {
       if (a.getStatusSaude() == StatusSaude.EM_TRATAMENTO) {
-        ConsultaVeterinaria c = ConsultaVeterinaria.create(
-            a,
-            veterinario,
-            LocalDateTime.now().minusDays(3),
-            "Avaliação de ferimento",
-            "Curativo e antibiótico",
-            "Antibiótico tópico",
-            true,
-            LocalDateTime.now().plusDays(7),
-            "Revisão em uma semana");
-        em.persist(c);
+        // Consulta inicial (já realizada)
+        ConsultaVeterinaria consulta1 = new ConsultaVeterinaria();
+        consulta1.setAnimal(a);
+        consulta1.setVeterinario(veterinario);
+        consulta1.setDataHora(LocalDateTime.now().minusDays(7));
+        consulta1.setTipoConsulta(ConsultaVeterinaria.TipoConsulta.EMERGENCIA);
+        consulta1.setStatus(ConsultaVeterinaria.StatusConsulta.CONCLUIDA);
+        consulta1.setDiagnostico("Diagnóstico inicial: " + a.getDetalhesSaude());
+        consulta1.setTratamento("Medicação e cuidados intensivos");
+        consulta1.setMedicamentos("Antibiótico de amplo espectro");
+        consulta1.setObservacoes("Animal chegou em condição preocupante");
+        consulta1.setAcompanhamentoNecessario(true);
+        consulta1.setDataRetorno(LocalDateTime.now().minusDays(3));
+        em.persist(consulta1);
+
+        // Consulta de acompanhamento (já realizada)
+        ConsultaVeterinaria consulta2 = new ConsultaVeterinaria();
+        consulta2.setAnimal(a);
+        consulta2.setVeterinario(veterinario);
+        consulta2.setDataHora(LocalDateTime.now().minusDays(3));
+        consulta2.setTipoConsulta(ConsultaVeterinaria.TipoConsulta.TRATAMENTO);
+        consulta2.setStatus(ConsultaVeterinaria.StatusConsulta.CONCLUIDA);
+        consulta2.setDiagnostico("Evolução positiva, mas ainda em tratamento");
+        consulta2.setTratamento("Continuar medicação e iniciar fisioterapia");
+        consulta2.setMedicamentos("Antibiótico tópico e anti-inflamatório");
+        consulta2.setObservacoes("Resposta boa ao tratamento inicial");
+        consulta2.setAcompanhamentoNecessario(true);
+        consulta2.setDataRetorno(LocalDateTime.now().plusDays(7));
+        em.persist(consulta2);
       }
+    }
+
+    // 2. Consultas de rotina para animais saudáveis (consultas passadas)
+    for (int i = 0; i < 3; i++) {
+      Animal animal = animais[i];
+      if (animal.getStatusSaude() == StatusSaude.SAUDAVEL) {
+        ConsultaVeterinaria consulta = new ConsultaVeterinaria();
+        consulta.setAnimal(animal);
+        consulta.setVeterinario(veterinario);
+        consulta.setDataHora(LocalDateTime.now().minusDays(30 + i * 2));
+        consulta.setTipoConsulta(ConsultaVeterinaria.TipoConsulta.ROTINA);
+        consulta.setStatus(ConsultaVeterinaria.StatusConsulta.CONCLUIDA);
+        consulta.setDiagnostico("Animal em boas condições de saúde");
+        consulta.setTratamento("Nenhum tratamento necessário");
+        consulta.setMedicamentos("Suplementos vitamínicos preventivos");
+        consulta.setObservacoes("Exame de rotina sem intercorrências");
+        consulta.setAcompanhamentoNecessario(false);
+        em.persist(consulta);
+      }
+    }
+
+    // 3. Consultas agendadas para o futuro (próximos dias)
+    for (int i = 3; i < 6; i++) {
+      if (i < animais.length) {
+        Animal animal = animais[i];
+        ConsultaVeterinaria consulta = new ConsultaVeterinaria();
+        consulta.setAnimal(animal);
+        consulta.setVeterinario(veterinario);
+        consulta.setDataHora(LocalDateTime.now().plusDays(i));
+        consulta.setTipoConsulta(
+            i % 2 == 0 ? ConsultaVeterinaria.TipoConsulta.ROTINA : ConsultaVeterinaria.TipoConsulta.EXAME);
+        consulta.setStatus(ConsultaVeterinaria.StatusConsulta.AGENDADA);
+        consulta.setDiagnostico("");
+        consulta.setTratamento("");
+        consulta.setMedicamentos("");
+        consulta.setObservacoes("Consulta agendada para check-up regular");
+        consulta.setAcompanhamentoNecessario(false);
+        em.persist(consulta);
+      }
+    }
+
+    // 4. Uma consulta em andamento para hoje
+    if (animais.length > 6) {
+      Animal animal = animais[6];
+      ConsultaVeterinaria consulta = new ConsultaVeterinaria();
+      consulta.setAnimal(animal);
+      consulta.setVeterinario(veterinario);
+      consulta.setDataHora(LocalDateTime.now().minusHours(2));
+      consulta.setTipoConsulta(ConsultaVeterinaria.TipoConsulta.CIRURGIA);
+      consulta.setStatus(ConsultaVeterinaria.StatusConsulta.EM_ANDAMENTO);
+      consulta.setDiagnostico("Necessidade de pequena intervenção cirúrgica");
+      consulta.setTratamento("Procedimento cirúrgico menor");
+      consulta.setMedicamentos("Anestésicos e antibióticos");
+      consulta.setObservacoes("Procedimento em andamento");
+      consulta.setAcompanhamentoNecessario(true);
+      consulta.setDataRetorno(LocalDateTime.now().plusDays(10));
+      em.persist(consulta);
+    }
+
+    // 5. Uma consulta cancelada
+    if (animais.length > 7) {
+      Animal animal = animais[7];
+      ConsultaVeterinaria consulta = new ConsultaVeterinaria();
+      consulta.setAnimal(animal);
+      consulta.setVeterinario(veterinario);
+      consulta.setDataHora(LocalDateTime.now().minusDays(1));
+      consulta.setTipoConsulta(ConsultaVeterinaria.TipoConsulta.ROTINA);
+      consulta.setStatus(ConsultaVeterinaria.StatusConsulta.CANCELADA);
+      consulta.setDiagnostico("");
+      consulta.setTratamento("");
+      consulta.setMedicamentos("");
+      consulta.setObservacoes("Consulta cancelada devido a emergência com outro animal");
+      consulta.setAcompanhamentoNecessario(false);
+      em.persist(consulta);
     }
 
     // Manutenções de Habitat realistas (uma de cada tipo/status/prioridade)
