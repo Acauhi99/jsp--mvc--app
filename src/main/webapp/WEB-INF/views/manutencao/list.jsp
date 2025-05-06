@@ -77,10 +77,17 @@
                             </c:choose>
                         </td>
                         <td>
-                            <a href="${pageContext.request.contextPath}/manutencao/detalhes?id=${m.id}" class="btn btn-sm btn-view">Ver</a>
-                            <c:if test="${m.status != 'CONCLUIDA'}">
-                                <a href="${pageContext.request.contextPath}/manutencao/editar?id=${m.id}" class="btn btn-sm btn-edit">Editar</a>
-                            </c:if>
+                            <div class="action-buttons">
+                                <a href="${pageContext.request.contextPath}/manutencao/detalhes?id=${m.id}" 
+                                   class="btn btn-sm btn-view action-btn">Ver</a>
+                                <c:if test="${m.status != 'CONCLUIDA'}">
+                                    <a href="${pageContext.request.contextPath}/manutencao/editar?id=${m.id}" 
+                                       class="btn btn-sm btn-edit action-btn">Editar</a>
+                                </c:if>
+                                <c:if test="${m.status == 'CONCLUIDA'}">
+                                    <span class="action-placeholder"></span>
+                                </c:if>
+                            </div>
                         </td>
                     </tr>
                 </c:forEach>

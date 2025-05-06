@@ -848,6 +848,37 @@ body {
   border-left: 5px solid #2ecc71;
 }
 
+.dashboard-welcome {
+  margin-bottom: 2rem;
+}
+.dashboard-quick-actions {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+.dashboard-section {
+  margin: 2rem 0;
+}
+.section-subtitle {
+  margin-bottom: 1rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+.dashboard-info {
+  background: #f1f9ff;
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+.dashboard-alert {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
 .badge {
   display: inline-block;
   padding: 0.3rem 1rem;
@@ -895,4 +926,19 @@ body {
   background: #fae2e2;
   color: #e74c3c;
   border: 1px solid #fbc7c7;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.action-btn {
+  width: 60px;
+  text-align: center;
+}
+
+.action-placeholder {
+  width: 60px;
 }

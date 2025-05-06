@@ -146,7 +146,10 @@ public class ManutencaoHabitatServlet extends HttpServlet {
     Optional<ManutencaoHabitat> manutencaoOpt = manutencaoRepo.findById(UUID.fromString(id));
     if (manutencaoOpt.isPresent()) {
       List<Habitat> habitats = habitatRepo.findAll();
+      List<Funcionario> manutentores = funcionarioRepo.findByCargo(Cargo.MANUTENCAO);
+
       req.setAttribute("habitats", habitats);
+      req.setAttribute("manutentores", manutentores);
       req.setAttribute("manutencao", manutencaoOpt.get());
       req.getRequestDispatcher("/WEB-INF/views/manutencao/edit.jsp").forward(req, resp);
     } else {
@@ -183,7 +186,21 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       if (req.getParameter("dataProgramada") != null && !req.getParameter("dataProgramada").isEmpty()) {
         dataProgramada = LocalDateTime.parse(req.getParameter("dataProgramada"));
       }
-      Funcionario solicitante = (Funcionario) req.getSession().getAttribute("user");
+
+      Object userObj = req.getSession().getAttribute("user");
+      Funcionario solicitante = null;
+
+      if (userObj instanceof dtos.auth.LoginResponse) {
+        dtos.auth.LoginResponse loginResponse = (dtos.auth.LoginResponse) userObj;
+        UUID userId = loginResponse.getUserDetails().getId();
+        solicitante = funcionarioRepo.findById(userId).orElse(null);
+      } else if (userObj instanceof Funcionario) {
+        solicitante = (Funcionario) userObj;
+      }
+
+      if (solicitante == null) {
+        throw new ServletException("Usuário não autenticado corretamente");
+      }
 
       ManutencaoHabitat manutencao;
       if (id != null && !id.isEmpty()) {

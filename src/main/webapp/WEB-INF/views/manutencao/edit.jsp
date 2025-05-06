@@ -49,6 +49,15 @@
                         value="<c:if test='${not empty manutencao.dataProgramada}'>${fn:substring(manutencao.dataProgramada,0,16)}</c:if>">
                 </div>
                 <div class="form-group">
+                    <label for="responsavel">Responsável</label>
+                    <select name="responsavel" id="responsavel">
+                        <option value="">Selecione</option>
+                        <c:forEach var="f" items="${manutentores}">
+                            <option value="${f.id}" <c:if test="${not empty manutencao.responsavel && manutencao.responsavel.id == f.id}">selected</c:if>>${f.nome}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="descricao">Descrição</label>
                     <textarea id="descricao" name="descricao" rows="5" required
                         style="width:100%; min-width:100%; max-width:100%; min-height:120px; max-height:200px; resize:vertical; box-sizing:border-box;">${manutencao.descricao}</textarea>
