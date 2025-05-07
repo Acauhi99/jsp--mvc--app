@@ -546,6 +546,13 @@ body {
   outline: none;
   border-color: var(--secondary-color);
 }
+.form-group textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  resize: none;
+  box-sizing: border-box;
+}
 .checkbox-group {
   display: flex;
   align-items: center;

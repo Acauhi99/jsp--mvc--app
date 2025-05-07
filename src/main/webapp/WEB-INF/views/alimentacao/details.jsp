@@ -11,12 +11,7 @@
             <h1 class="details-title">Registro de Alimentação</h1>
             
             <div class="details-actions">
-                <a href="${pageContext.request.contextPath}/alimentacao/editar/${alimentacao.id}" class="btn btn-primary">Editar</a>
-                <form action="${pageContext.request.contextPath}/alimentacao" method="post" style="display:inline;">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <input type="hidden" name="id" value="${alimentacao.id}">
-                    <button type="submit" class="btn btn-delete" onclick="return confirm('Tem certeza que deseja excluir este registro?')">Excluir</button>
-                </form>
+                
             </div>
         </div>
         
@@ -76,7 +71,6 @@
         </div>
         
         <div class="details-actions" style="margin-top: 2rem;">
-            <a href="${pageContext.request.contextPath}/animal/${alimentacao.animal.id}" class="btn btn-outline">Ver Detalhes do Animal</a>
             <a href="${pageContext.request.contextPath}/alimentacao?animalId=${alimentacao.animal.id}" class="btn btn-outline">Ver Histórico de Alimentação</a>
         </div>
     </div>

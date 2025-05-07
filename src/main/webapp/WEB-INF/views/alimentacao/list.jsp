@@ -19,7 +19,7 @@
             </form>
             
             <a href="${pageContext.request.contextPath}/alimentacao/novo" class="btn btn-primary">
-                <i class="menu-icon">➕</i> Nova Alimentação
+                <i class="menu-icon"></i> Agendar Alimentação
             </a>
         </div>
         

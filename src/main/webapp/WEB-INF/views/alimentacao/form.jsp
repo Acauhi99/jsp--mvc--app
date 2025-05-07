@@ -66,11 +66,13 @@
                     <select id="funcionarioId" name="funcionarioId" required>
                         <option value="">Selecione o responsável</option>
                         <c:forEach var="funcionario" items="${funcionarios}">
-                            <option value="${funcionario.id}" 
+                            <c:if test="${funcionario.cargo == 'VETERINARIO'}">
+                                <option value="${funcionario.id}" 
                                     ${not empty alimentacao && alimentacao.funcionarioResponsavel.id == funcionario.id ? 'selected' : ''}
-                                    ${empty alimentacao && sessionScope.user.id == funcionario.id ? 'selected' : ''}>
-                                ${funcionario.nome}
-                            </option>
+                                    ${empty alimentacao && sessionScope.user.userDetails.id == funcionario.id ? 'selected' : ''}>
+                                    ${funcionario.nome}
+                                </option>
+                            </c:if>
                         </c:forEach>
                     </select>
                 </div>
