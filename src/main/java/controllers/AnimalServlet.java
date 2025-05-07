@@ -58,6 +58,63 @@ public class AnimalServlet extends HttpServlet {
       } else {
         resp.sendRedirect(req.getContextPath() + "/animal/galeria");
       }
+    } else if (path.startsWith("/novo")) {
+      // Carregue listas para selects
+      req.setAttribute("classes", Classe.values());
+      req.setAttribute("generos", Genero.values());
+      // Carregue habitats do banco
+      List<models.Habitat> habitats = new repositories.HabitatRepository().findAll();
+      req.setAttribute("habitats", habitats);
+
+      req.getRequestDispatcher("/WEB-INF/views/animal/form.jsp").forward(req, resp);
+    } else {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+    }
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
+    String path = req.getPathInfo();
+    if (path != null && path.startsWith("/novo")) {
+      // Obtenha os parâmetros do formulário
+      String nome = req.getParameter("nome");
+      String especie = req.getParameter("especie");
+      String nomeCientifico = req.getParameter("nomeCientifico");
+      String classe = req.getParameter("classe");
+      String genero = req.getParameter("genero");
+      String habitatId = req.getParameter("habitatId");
+      String statusSaude = req.getParameter("statusSaude");
+      String dataChegada = req.getParameter("dataChegada");
+      String detalhesSaude = req.getParameter("detalhesSaude");
+
+      // Crie o objeto Animal
+      Animal animal = new Animal();
+      animal.setNome(nome);
+      animal.setEspecie(especie);
+      animal.setNomeCientifico(nomeCientifico);
+      animal.setClasse(Classe.valueOf(classe));
+      animal.setGenero(Genero.valueOf(genero));
+      animal.setStatusSaude(Animal.StatusSaude.valueOf(statusSaude));
+      animal.setDetalhesSaude(detalhesSaude);
+
+      // Parse dataChegada
+      if (dataChegada != null && !dataChegada.isEmpty()) {
+        animal.setDataChegada(java.time.LocalDate.parse(dataChegada));
+      }
+
+      // Buscar habitat
+      if (habitatId != null && !habitatId.isEmpty()) {
+        models.Habitat habitat = new repositories.HabitatRepository()
+            .findById(java.util.UUID.fromString(habitatId)).orElse(null);
+        animal.setHabitat(habitat);
+      }
+
+      // Salvar no banco
+      animalRepo.save(animal);
+
+      // Redirecionar para a lista
+      resp.sendRedirect(req.getContextPath() + "/animal/galeria");
     } else {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
     }

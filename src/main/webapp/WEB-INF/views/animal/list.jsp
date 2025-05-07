@@ -4,6 +4,15 @@
 <t:master title="Animais do Zoológico">
     <div class="container">
         <h1 class="section-title">Animais do Zoológico</h1>
+        
+        <c:if test="${sessionScope.user.userDetails.role == 'VETERINARIO' || sessionScope.user.userDetails.role == 'ADMINISTRADOR'}">
+            <div style="margin-bottom:1.5rem;">
+                <a href="${pageContext.request.contextPath}/animal/novo" class="btn btn-primary">
+                    Registrar Animal
+                </a>
+            </div>
+        </c:if>
+        
         <form method="get" style="margin-bottom:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
             <input type="text" name="especie" placeholder="Espécie" value="${especie != null ? especie : ''}" />
             <select name="classe">
