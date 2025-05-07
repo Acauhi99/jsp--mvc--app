@@ -28,7 +28,7 @@
                         <strong>Chegada ao Zoo:</strong> ${fn:substring(animal.dataChegada, 8, 10)}/${fn:substring(animal.dataChegada, 5, 7)}/${fn:substring(animal.dataChegada, 0, 4)}
                     </div>
                     <div>
-                        <strong>Idade aproximada:</strong> ${animal.idade} anos
+                        <strong>Nome Científico:</strong> ${animal.nomeCientifico}
                     </div>
                     <div>
                         <strong>Habitat:</strong> ${animal.habitat.nome}

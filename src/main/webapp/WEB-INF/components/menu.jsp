@@ -42,6 +42,7 @@
                         
                         <a href="${pageContext.request.contextPath}/consulta"><i class="menu-icon">🩺</i> Consultas</a>
                         <a href="${pageContext.request.contextPath}/consulta/historico"><i class="menu-icon">📋</i> Histórico</a>
+                        <a href="${pageContext.request.contextPath}/alimentacao"><i class="menu-icon">🍽️</i> Alimentação</a>
                     </c:when>
                     
                     <%-- Menu para Equipe de Manutenção --%>
