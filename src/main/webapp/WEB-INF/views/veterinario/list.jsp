@@ -7,7 +7,7 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <a href="${pageContext.request.contextPath}/funcionario/novo?tipo=VETERINARIO" class="btn btn-primary">
-                <i class="menu-icon">🩺</i> Adicionar Novo Veterinário
+                <i class="menu-icon"></i> Adicionar Novo Veterinário
             </a>
         </div>
         
