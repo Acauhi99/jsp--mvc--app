@@ -22,15 +22,34 @@
                     <%-- Menu para Administrador --%>
                     <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}">
                         <a href="${pageContext.request.contextPath}/dashboard/admin"><i class="menu-icon">📊</i> Dashboard</a>
-                        <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦊</i> Animais</a>
+                        
+                        <span class="separator"></span>
+                        <span class="menu-section">Cadastros</span>
+                        
+                        <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦁</i> Animais</a>
                         <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
                         <a href="${pageContext.request.contextPath}/funcionario"><i class="menu-icon">👨‍💼</i> Funcionários</a>
                         
                         <span class="separator"></span>
+                        <span class="menu-section">Operações</span>
                         
                         <a href="${pageContext.request.contextPath}/alimentacao"><i class="menu-icon">🍽️</i> Alimentação</a>
                         <a href="${pageContext.request.contextPath}/consulta"><i class="menu-icon">🩺</i> Consultas</a>
+                        <a href="${pageContext.request.contextPath}/consulta/historico"><i class="menu-icon">📋</i> Histórico Médico</a>
                         <a href="${pageContext.request.contextPath}/manutencao"><i class="menu-icon">🔧</i> Manutenção</a>
+                        
+                        <span class="separator"></span>
+                        <span class="menu-section">Visitantes</span>
+                        
+                        <a href="${pageContext.request.contextPath}/ingresso/admin"><i class="menu-icon">🎟️</i> Ingressos</a>
+                        <a href="${pageContext.request.contextPath}/customer"><i class="menu-icon">👥</i> Visitantes</a>
+                        
+                        <span class="separator"></span>
+                        <span class="menu-section">Relatórios</span>
+                        
+                        <a href="${pageContext.request.contextPath}/relatorio/animais"><i class="menu-icon">📈</i> Animais por Habitat</a>
+                        <a href="${pageContext.request.contextPath}/relatorio/consultas"><i class="menu-icon">📉</i> Consultas Realizadas</a>
+                        <a href="${pageContext.request.contextPath}/relatorio/vendas"><i class="menu-icon">💰</i> Vendas de Ingressos</a>
                     </c:when>
                     
                     <%-- Menu para Veterinários --%>

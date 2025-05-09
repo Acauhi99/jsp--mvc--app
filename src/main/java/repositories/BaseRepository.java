@@ -14,18 +14,18 @@ import java.util.UUID;
 import config.DatabaseConfig;
 
 public abstract class BaseRepository<T> {
-    
+
     private final Class<T> entityClass;
     protected static EntityManagerFactory emf = DatabaseConfig.getEntityManagerFactory();
-    
+
     protected BaseRepository(Class<T> entityClass) {
         this.entityClass = entityClass;
     }
-    
-    protected EntityManager getEntityManager() {
+
+    public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
-    
+
     public T save(T entity) {
         EntityManager em = getEntityManager();
         try {
@@ -42,7 +42,7 @@ public abstract class BaseRepository<T> {
             em.close();
         }
     }
-    
+
     public T update(T entity) {
         EntityManager em = getEntityManager();
         try {
@@ -59,7 +59,7 @@ public abstract class BaseRepository<T> {
             em.close();
         }
     }
-    
+
     public void delete(UUID id) {
         EntityManager em = getEntityManager();
         try {
@@ -78,7 +78,7 @@ public abstract class BaseRepository<T> {
             em.close();
         }
     }
-    
+
     public Optional<T> findById(UUID id) {
         EntityManager em = getEntityManager();
         try {
@@ -88,7 +88,7 @@ public abstract class BaseRepository<T> {
             em.close();
         }
     }
-    
+
     public List<T> findAll() {
         EntityManager em = getEntityManager();
         try {

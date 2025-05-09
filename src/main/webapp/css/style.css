@@ -361,8 +361,7 @@ body {
 .menu-items .separator {
   height: 1px;
   background-color: #eee;
-  margin: 0.8rem 1.5rem;
-  width: calc(100% - 3rem);
+  margin: 0.5rem 0;
 }
 .menu-items .profile-link {
   margin-top: 2rem;
@@ -382,7 +381,14 @@ body {
   border-left-color: var(--danger-color);
 }
 .menu-section {
-  margin-bottom: 1rem;
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #888;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1rem 0.25rem;
+  pointer-events: none;
 }
 .menu-section-title {
   padding: 0.5rem 1.5rem;
@@ -974,4 +980,28 @@ body {
 
 .action-placeholder {
   width: 60px;
+}
+
+.action-buttons form {
+  margin: 0;
+}
+.action-buttons button.action-btn {
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0.3rem 0.8rem;
+  display: inline-block;
+  width: 60px;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.6;
+}
+.action-buttons button.btn-delete.action-btn {
+  padding: 0.3rem 0 !important;
+  text-align: center !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  font-size: 0.9rem !important;
 }
