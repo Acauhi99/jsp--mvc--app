@@ -28,7 +28,7 @@
                         
                         <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦁</i> Animais</a>
                         <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
-                        <a href="${pageContext.request.contextPath}/funcionario"><i class="menu-icon">👨‍💼</i> Funcionários</a>
+                        <a href="${pageContext.request.contextPath}/funcionario/veterinario"><i class="menu-icon">👨‍💼</i> Veterinários</a>
                         
                         <span class="separator"></span>
                         <span class="menu-section">Operações</span>
@@ -47,7 +47,6 @@
                         <span class="separator"></span>
                         <span class="menu-section">Relatórios</span>
                         
-                        <a href="${pageContext.request.contextPath}/relatorio/animais"><i class="menu-icon">📈</i> Animais por Habitat</a>
                         <a href="${pageContext.request.contextPath}/relatorio/consultas"><i class="menu-icon">📉</i> Consultas Realizadas</a>
                         <a href="${pageContext.request.contextPath}/relatorio/vendas"><i class="menu-icon">💰</i> Vendas de Ingressos</a>
                     </c:when>

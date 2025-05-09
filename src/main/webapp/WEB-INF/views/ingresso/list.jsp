@@ -5,7 +5,7 @@
 <t:master title="Meus Ingressos">
     <div class="container">
         <h1 class="section-title">Meus Ingressos</h1>
-        <form method="get" style="margin-bottom:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
+        <form method="get" style="margin-bottom:0.1rem;display:flex;gap:1rem;flex-wrap:wrap;">
             <label>
                 Status:
                 <select name="status">
@@ -32,6 +32,9 @@
             </label>
             <button type="submit" class="btn btn-primary">Filtrar</button>
         </form>
+        <c:if test="${empty isAdmin}">
+            <a href="${pageContext.request.contextPath}/ingresso/comprar" class="btn btn-primary btn-sm" style="margin-top:2rem;">Comprar Novo Ingresso</a>
+        </c:if>
         <c:choose>
             <c:when test="${empty ingressos}">
                 <div class="alert alert-error">Nenhum ingresso encontrado.</div>
@@ -111,7 +114,6 @@
                     </c:if>
                 </div>
             </c:otherwise>
-        </c:choose>
-        <a href="${pageContext.request.contextPath}/ingresso/comprar" class="btn btn-primary btn-large" style="margin-top:2rem;">Comprar Novo Ingresso</a>
+        </c:choose> 
     </div>
 </t:master>
