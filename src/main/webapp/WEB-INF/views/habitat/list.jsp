@@ -13,6 +13,15 @@
             </select>
             <button type="submit" class="btn btn-primary">Filtrar</button>
         </form>
+
+        <c:if test="${sessionScope.user.userDetails.role == 'ADMINISTRADOR'}">
+            <div style="margin-bottom:1.5rem;">
+                <a href="${pageContext.request.contextPath}/habitat/novo" class="btn btn-primary">
+                    <i class="menu-icon"></i> Cadastrar Novo Habitat
+                </a>
+            </div>
+        </c:if>
+        
         <div class="featured-grid">
             <c:choose>
                 <c:when test="${empty habitats}">
