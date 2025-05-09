@@ -41,9 +41,14 @@
                     <thead>
                         <tr>
                             <th>Tipo</th>
+                            <c:if test="${isAdmin}"><th>Comprador</th></c:if>
                             <th>Valor</th>
                             <th>Data da Compra</th>
                             <th>Status</th>
+                            <c:if test="${isAdmin}"><th>Ações</th></c:if>
+                            <c:if test="${empty isAdmin}">
+                                <th>Ações</th>
+                            </c:if>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,6 +64,9 @@
                                         <c:otherwise>${ingresso.tipo}</c:otherwise>
                                     </c:choose>
                                 </td>
+                                <c:if test="${isAdmin}">
+                                    <td>${ingresso.comprador.nome}</td>
+                                </c:if>
                                 <td>
                                     <fmt:formatNumber value="${ingresso.valor}" type="currency" currencySymbol="R$ " minFractionDigits="2"/>
                                 </td>
@@ -75,6 +83,20 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+                                <c:if test="${isAdmin}">
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="${pageContext.request.contextPath}/ingresso/detalhes?id=${ingresso.id}" class="btn btn-sm btn-view action-btn">Ver</a>
+                                        </div>
+                                    </td>
+                                </c:if>
+                                <c:if test="${empty isAdmin}">
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="${pageContext.request.contextPath}/ingresso/detalhes?id=${ingresso.id}" class="btn btn-sm btn-view action-btn">Ver</a>
+                                        </div>
+                                    </td>
+                                </c:if>
                             </tr>
                         </c:forEach>
                     </tbody>
