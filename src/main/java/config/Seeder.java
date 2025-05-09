@@ -42,21 +42,21 @@ public class Seeder {
       visitante.setId(UUID.fromString("05e81bf8-03ee-449b-a443-98301d6c9ea0"));
       visitante.setNome("Visitante Teste");
       visitante.setEmail("visitante@visitante.com");
-      visitante.setPassword("123");
+      visitante.setPassword("visitante");
       em.persist(visitante);
     }
     if (admin == null) {
-      admin = Funcionario.create("Administrador", "admin@admin.com", "123", Cargo.ADMINISTRADOR);
+      admin = Funcionario.create("Administrador", "admin@admin.com", "admin", Cargo.ADMINISTRADOR);
       admin.setId(UUID.fromString("12ad950a-0967-4ced-ace4-3d38b1dbbde7"));
       em.persist(admin);
     }
     if (veterinario == null) {
-      veterinario = Funcionario.create("Veterinario", "veterinario@veterinario.com", "123", Cargo.VETERINARIO);
+      veterinario = Funcionario.create("Veterinario", "veterinario@veterinario.com", "veterinario", Cargo.VETERINARIO);
       veterinario.setId(UUID.fromString("89ffea78-564c-409c-80ff-ebf2bc9b61bf"));
       em.persist(veterinario);
     }
     if (manutencao == null) {
-      manutencao = Funcionario.create("Manutencao", "manutencao@manutencao.com", "123", Cargo.MANUTENCAO);
+      manutencao = Funcionario.create("Manutencao", "manutencao@manutencao.com", "manutencao", Cargo.MANUTENCAO);
       manutencao.setId(UUID.fromString("104d0d21-d433-45fd-80ec-b9f791931580"));
       em.persist(manutencao);
     }
