@@ -7,22 +7,22 @@
     <div class="container">
         <h1 class="section-title">Relatório de Consultas Veterinárias</h1>
         
-        <div class="card" style="padding:1.5rem; margin-bottom:2rem; background:#fff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-            <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Filtros</h3>
+        <div class="report-card report-filters">
+            <h3 class="report-title">Filtros</h3>
             
-            <form method="get" action="${pageContext.request.contextPath}/relatorio/consultas" style="display:flex; flex-wrap:wrap; gap:1rem;">
-                <div style="flex:1 1 200px;">
-                    <label for="dataInicio" style="display:block; margin-bottom:0.5rem; font-weight:500;">Data Início</label>
+            <form method="get" action="${pageContext.request.contextPath}/relatorio/consultas" class="report-filters-form">
+                <div class="form-field">
+                    <label for="dataInicio">Data Início</label>
                     <input type="date" id="dataInicio" name="dataInicio" value="${dataInicio}" class="form-control">
                 </div>
                 
-                <div style="flex:1 1 200px;">
-                    <label for="dataFim" style="display:block; margin-bottom:0.5rem; font-weight:500;">Data Fim</label>
+                <div class="form-field">
+                    <label for="dataFim">Data Fim</label>
                     <input type="date" id="dataFim" name="dataFim" value="${dataFim}" class="form-control">
                 </div>
                 
-                <div style="flex:1 1 200px;">
-                    <label for="veterinarioId" style="display:block; margin-bottom:0.5rem; font-weight:500;">Veterinário</label>
+                <div class="form-field">
+                    <label for="veterinarioId">Veterinário</label>
                     <select id="veterinarioId" name="veterinarioId" class="form-control">
                         <option value="">Todos</option>
                         <c:forEach var="vet" items="${veterinarios}">
@@ -31,8 +31,8 @@
                     </select>
                 </div>
                 
-                <div style="flex:1 1 200px;">
-                    <label for="tipoConsulta" style="display:block; margin-bottom:0.5rem; font-weight:500;">Tipo de Consulta</label>
+                <div class="form-field">
+                    <label for="tipoConsulta">Tipo de Consulta</label>
                     <select id="tipoConsulta" name="tipoConsulta" class="form-control">
                         <option value="">Todos</option>
                         <c:forEach var="tipo" items="${tiposConsulta}">
@@ -41,8 +41,8 @@
                     </select>
                 </div>
                 
-                <div style="flex:1 1 200px;">
-                    <label for="statusConsulta" style="display:block; margin-bottom:0.5rem; font-weight:500;">Status</label>
+                <div class="form-field">
+                    <label for="statusConsulta">Status</label>
                     <select id="statusConsulta" name="statusConsulta" class="form-control">
                         <option value="">Todos</option>
                         <c:forEach var="status" items="${statusConsulta}">
@@ -51,51 +51,45 @@
                     </select>
                 </div>
                 
-                <div style="flex:1 1 100px; display:flex; align-items:flex-end;">
-                    <button type="submit" class="btn btn-primary" style="width:100%;">Filtrar</button>
+                <div class="form-action">
+                    <button type="submit" class="btn btn-primary btn-full">Filtrar</button>
                 </div>
             </form>
         </div>
         
-        <div style="display:flex; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem;">
-            <div style="flex:1 1 220px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); border-left:5px solid #3498db;">
-                <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;">Total de Consultas</div>
-                <div style="font-size:2.5rem; font-weight:bold; color:#2c3e50;">${totalConsultas}</div>
+        <div class="report-dashboard">
+            <div class="stat-card primary-border">
+                <div class="stat-label">Total de Consultas</div>
+                <div class="stat-value">${totalConsultas}</div>
             </div>
  
             <c:forEach var="entry" items="${consultasPorStatus}">
                 <c:if test="${entry.value > 0}">
-                    <div style="flex:1 1 220px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); 
-                        border-left:5px solid 
-                        <c:choose>
-                            <c:when test="${entry.key == 'AGENDADA'}">#3498db</c:when>
-                            <c:when test="${entry.key == 'EM_ANDAMENTO'}">#f39c12</c:when>
-                            <c:when test="${entry.key == 'CONCLUIDA'}">#2ecc71</c:when>
-                            <c:when test="${entry.key == 'CANCELADA'}">#e74c3c</c:when>
-                            <c:otherwise>#95a5a6</c:otherwise>
-                        </c:choose>
-                        ;">
-                        <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;">${entry.key}</div>
-                        <div style="font-size:2.5rem; font-weight:bold; color:#2c3e50;">${entry.value}</div>
+                    <div class="stat-card ${entry.key == 'AGENDADA' ? 'primary-border' : 
+                                             entry.key == 'EM_ANDAMENTO' ? 'warning-border' : 
+                                             entry.key == 'CONCLUIDA' ? 'success-border' : 
+                                             entry.key == 'CANCELADA' ? 'danger-border' : 'default-border'}">
+                        <div class="stat-label">${entry.key}</div>
+                        <div class="stat-value">${entry.value}</div>
                     </div>
                 </c:if>
             </c:forEach>
         </div>
         
-        <div style="display:flex; flex-wrap:wrap; gap:2rem; margin-bottom:2rem;">
-            <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Consultas por Tipo</h3>
+        <div class="report-grid">
+            <div class="report-grid-item">
+                <h3 class="report-title">Consultas por Tipo</h3>
                 
-                <div>
+                <div class="progress-bar-container">
                     <c:forEach var="entry" items="${consultasPorTipo}">
                         <c:if test="${entry.value > 0}">
-                            <div style="margin-bottom:1rem;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                            <div>
+                                <div class="progress-item-header">
                                     <span>${entry.key}</span>
                                     <span>${entry.value} consultas</span>
                                 </div>
-                                <div style="height:10px; background:#eee; border-radius:5px; overflow:hidden;">
-                                    <div style="height:100%; background:#3498db; width:${(entry.value / totalConsultas) * 100}%;"></div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar progress-adulto" style="width:${(entry.value / totalConsultas) * 100}%;"></div>
                                 </div>
                             </div>
                         </c:if>
@@ -103,18 +97,18 @@
                 </div>
             </div>
         
-            <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Consultas por Veterinário</h3>
+            <div class="report-grid-item">
+                <h3 class="report-title">Consultas por Veterinário</h3>
                 
-                <div>
+                <div class="progress-bar-container">
                     <c:forEach var="entry" items="${consultasPorVeterinario}">
-                        <div style="margin-bottom:1rem;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                        <div>
+                            <div class="progress-item-header">
                                 <span>${entry.key}</span>
                                 <span>${entry.value} consultas</span>
                             </div>
-                            <div style="height:10px; background:#eee; border-radius:5px; overflow:hidden;">
-                                <div style="height:100%; background:#e67e22; width:${(entry.value / totalConsultas) * 100}%;"></div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar progress-estudante" style="width:${(entry.value / totalConsultas) * 100}%;"></div>
                             </div>
                         </div>
                     </c:forEach>
@@ -122,15 +116,15 @@
             </div>
         </div>
         
-        <div style="background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin-bottom:2rem;">
-            <h3 style="margin-bottom:1.5rem; color:#2c3e50; font-size:1.3rem;">Listagem de Consultas</h3>
+        <div class="report-card">
+            <h3 class="report-subtitle">Listagem de Consultas</h3>
             
             <c:choose>
                 <c:when test="${empty consultas}">
                     <div class="alert alert-info">Nenhuma consulta encontrada para os filtros selecionados.</div>
                 </c:when>
                 <c:otherwise>
-                    <div style="overflow-x:auto;">
+                    <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -174,25 +168,25 @@
             </c:choose>
         </div>
      
-        <div style="background:#f1f9ff; border-radius:8px; padding:1.5rem; margin-bottom:2rem; border-left:5px solid #3498db;">
-            <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Insights</h3>
+        <div class="insight-section">
+            <h3 class="report-title">Insights</h3>
             
-            <ul style="list-style-type:circle; margin-left:1.5rem;">
+            <ul class="insight-list">
                 <c:if test="${totalConsultas > 0}">
                     <c:if test="${consultasPorStatus['CANCELADA'] > 0}">
-                        <li style="margin-bottom:0.5rem;">
+                        <li>
                             <strong>${consultasPorStatus['CANCELADA']}</strong> consultas foram canceladas (${Math.round((consultasPorStatus['CANCELADA'] / totalConsultas) * 100)}% do total).
                         </li>
                     </c:if>
                     
                     <c:set var="emergencias" value="${consultasPorTipo['EMERGENCIA']}" />
                     <c:if test="${emergencias > 0}">
-                        <li style="margin-bottom:0.5rem;">
+                        <li>
                             <strong>${emergencias}</strong> consultas foram de emergência (${Math.round((emergencias / totalConsultas) * 100)}% do total).
                         </li>
                     </c:if>
                     
-                    <li style="margin-bottom:0.5rem;">
+                    <li>
                         O tipo de consulta mais frequente foi <strong>
                         <c:set var="maxTipo" value="" />
                         <c:set var="maxValor" value="0" />
