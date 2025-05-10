@@ -23,6 +23,11 @@
         <url-pattern>/images/*</url-pattern>
     </servlet-mapping>
 
+    <error-page>
+        <error-code>404</error-code>
+        <location>/WEB-INF/views/notfound.jsp</location>
+    </error-page>
+
     <listener>
         <listener-class>config.DatabaseConfig</listener-class>
     </listener>

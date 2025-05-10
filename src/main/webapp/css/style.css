@@ -1443,3 +1443,108 @@ body {
 .progress-tipo-MEIA {
   background: #f1c40f;
 }
+
+.notfound-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.notfound-icon {
+  font-size: 5rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  animation: pulsar 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulsar {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+.notfound-title {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.notfound-message {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.notfound-code {
+  font-size: 1rem;
+  color: #999;
+  margin-bottom: 2rem;
+}
+
+.notfound-actions {
+  margin-bottom: 2rem;
+}
+
+.notfound-suggestions {
+  background-color: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.notfound-suggestions h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+}
+
+.notfound-suggestions ul {
+  list-style-type: circle;
+  margin-left: 1.5rem;
+}
+
+.notfound-suggestions li {
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.notfound-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.quick-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  background-color: #f9f9f9;
+  color: var(--primary-color);
+  text-decoration: none;
+  min-width: 120px;
+  transition: all 0.2s;
+}
+
+.quick-link:hover {
+  background-color: var(--secondary-color);
+  color: white;
+  transform: translateY(-3px);
+}
+
+.quick-link .menu-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}

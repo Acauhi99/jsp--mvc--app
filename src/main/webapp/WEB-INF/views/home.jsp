@@ -18,9 +18,6 @@
                         </div>
                     </div>
                 </c:when>
-                <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/ingresso/comprar" class="btn btn-primary btn-large">Comprar Ingressos</a>
-                </c:otherwise>
             </c:choose>
         </div>
     </div>
