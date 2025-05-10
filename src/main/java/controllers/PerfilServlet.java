@@ -7,6 +7,10 @@ import java.io.IOException;
 
 @WebServlet("/perfil")
 public class PerfilServlet extends HttpServlet {
+
+  private static final String ROLE_VISITANTE = "VISITANTE";
+  private static final String ROLE_ADMINISTRADOR = "ADMINISTRADOR";
+
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -16,21 +20,58 @@ public class PerfilServlet extends HttpServlet {
       return;
     }
 
-    Object user = session.getAttribute("user");
+    String role = determineUserRole(session);
+    forwardToAppropriateView(req, resp, role);
+  }
+
+  private String determineUserRole(HttpSession session) {
     String role = (String) session.getAttribute("role");
-    if (role == null && user != null) {
-      try {
-        role = (String) user.getClass().getMethod("getRole").invoke(user);
-      } catch (Exception ignored) {
-      }
+    if (role != null) {
+      return role;
     }
 
-    if ("VISITANTE".equalsIgnoreCase(role)) {
-      req.getRequestDispatcher("/WEB-INF/views/perfil/visitor.jsp").forward(req, resp);
-    } else if ("ADMINISTRADOR".equalsIgnoreCase(role)) {
-      req.getRequestDispatcher("/WEB-INF/views/perfil/admin.jsp").forward(req, resp);
-    } else {
-      req.getRequestDispatcher("/WEB-INF/views/perfil/funcionario.jsp").forward(req, resp);
+    Object user = session.getAttribute("user");
+    if (user == null) {
+      return "";
     }
+
+    Class<?> userClass = user.getClass();
+    try {
+      if (hasMethod(userClass, "getRole")) {
+        Object roleObj = userClass.getMethod("getRole").invoke(user);
+        return roleObj != null ? roleObj.toString() : "";
+      } else if (hasMethod(userClass, "getCargo")) {
+        Object cargoObj = userClass.getMethod("getCargo").invoke(user);
+        return cargoObj != null ? cargoObj.toString() : "";
+      }
+    } catch (Exception e) {
+      System.err.println("Error determining user role: " + e.getMessage());
+    }
+
+    return "";
+  }
+
+  private boolean hasMethod(Class<?> clazz, String methodName) {
+    try {
+      clazz.getMethod(methodName);
+      return true;
+    } catch (NoSuchMethodException e) {
+      return false;
+    }
+  }
+
+  private void forwardToAppropriateView(HttpServletRequest req, HttpServletResponse resp, String role)
+      throws ServletException, IOException {
+    String viewPath;
+
+    if (ROLE_VISITANTE.equalsIgnoreCase(role)) {
+      viewPath = "/WEB-INF/views/perfil/visitor.jsp";
+    } else if (ROLE_ADMINISTRADOR.equalsIgnoreCase(role)) {
+      viewPath = "/WEB-INF/views/perfil/admin.jsp";
+    } else {
+      viewPath = "/WEB-INF/views/perfil/funcionario.jsp";
+    }
+
+    req.getRequestDispatcher(viewPath).forward(req, resp);
   }
 }

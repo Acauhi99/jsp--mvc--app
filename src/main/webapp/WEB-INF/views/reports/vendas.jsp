@@ -7,7 +7,6 @@
     <div class="container">
         <h1 class="section-title">Relatório de Vendas de Ingressos</h1>
         
-        <!-- Filtros -->
         <div class="card" style="padding:1.5rem; margin-bottom:2rem; background:#fff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
             <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Filtros</h3>
             
@@ -38,7 +37,6 @@
             </form>
         </div>
         
-        <!-- Resumo de Estatísticas -->
         <div style="display:flex; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem;">
             <div style="flex:1 1 220px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); border-left:5px solid #3498db;">
                 <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;">Total de Ingressos</div>
@@ -67,7 +65,6 @@
             </div>
         </div>
         
-        <!-- Vendas por Tipo de Ingresso -->
         <div style="display:flex; flex-wrap:wrap; gap:2rem; margin-bottom:2rem;">
             <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Vendas por Tipo de Ingresso</h3>
@@ -103,7 +100,6 @@
                 </table>
             </div>
             
-            <!-- Gráfico Visual de Distribuição -->
             <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Distribuição das Vendas</h3>
                 
@@ -140,7 +136,6 @@
             </div>
         </div>
         
-        <!-- Gráfico de Vendas por Dia - VERSÃO CORRIGIDA -->
         <div style="background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin-bottom:2rem;">
             <h3 style="margin-bottom:1.5rem; color:#2c3e50; font-size:1.3rem;">Vendas por Dia</h3>
             
@@ -152,7 +147,6 @@
                     </c:if>
                 </c:forEach>
                 
-                <!-- Calcular número total de dias para ajustar a exibição -->
                 <c:set var="totalDias" value="${vendasPorDia.size()}" />
                 
                 <div style="display:flex; height:250px; align-items:flex-end; gap:${totalDias > 20 ? 1 : 4}px; position:relative; margin-bottom:40px;">
@@ -161,14 +155,12 @@
                         <div style="flex:1; height:${altura > 0 ? altura : 1}px; background:#3498db; min-width:${totalDias > 30 ? 3 : 15}px; position:relative; border-radius:3px 3px 0 0;"
                              title="Data: ${venda.key} - Valor: R$ ${venda.value}">
                         
-                            <!-- Mostrar valor acima da barra apenas se houver espaço -->
                             <c:if test="${altura > 15 || totalDias < 15}">
                                 <div style="position:absolute; top:-20px; left:0; right:0; text-align:center; font-size:10px; white-space:nowrap;">
                                     <fmt:formatNumber value="${venda.value}" type="currency" currencySymbol="R$" />
                                 </div>
                             </c:if>
-                            
-                            <!-- Mostrar apenas algumas datas quando há muitos dias -->
+                    
                             <c:if test="${totalDias <= 15 || status.index % (totalDias > 60 ? 5 : totalDias > 30 ? 3 : 1) == 0}">
                                 <div style="position:absolute; bottom:-30px; left:0; right:0; text-align:center; 
                                             ${totalDias > 15 ? 'transform:rotate(-45deg); transform-origin:center left;' : ''}
@@ -183,8 +175,7 @@
                 <div style="height:1px; background:#ddd;"></div>
             </div>
         </div>
-        
-        <!-- Lista de Ingressos -->
+ 
         <div style="background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin-bottom:2rem;">
             <h3 style="margin-bottom:1.5rem; color:#2c3e50; font-size:1.3rem;">
                 Listagem de Ingressos 
@@ -233,11 +224,9 @@
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- Controles de Paginação -->
+             
                     <c:if test="${totalPaginas > 1}">
                         <div style="display:flex; justify-content:center; margin-top:1.5rem; gap:0.5rem; flex-wrap:wrap;">
-                            <!-- Botão Anterior -->
                             <c:if test="${paginaAtual > 1}">
                                 <c:url var="urlAnterior" value="/relatorio/vendas">
                                     <c:if test="${not empty param.dataInicio}">
@@ -254,7 +243,6 @@
                                 <a href="${urlAnterior}" class="btn btn-sm btn-outline">Anterior</a>
                             </c:if>
                             
-                            <!-- Mostrar primeira página se estiver muito distante -->
                             <c:if test="${inicio > 1}">
                                 <c:url var="urlPrimeira" value="/relatorio/vendas">
                                     <c:if test="${not empty param.dataInicio}">
@@ -273,8 +261,7 @@
                                     <span style="align-self:center; padding:0 0.5rem;">...</span>
                                 </c:if>
                             </c:if>
-                            
-                            <!-- Números de páginas -->
+                       
                             <c:forEach begin="${inicio}" end="${fim}" var="i">
                                 <c:choose>
                                     <c:when test="${i == paginaAtual}">
@@ -297,8 +284,7 @@
                                     </c:otherwise>
                                 </c:choose>
                             </c:forEach>
-                            
-                            <!-- Mostrar última página se estiver muito distante -->
+                
                             <c:if test="${fim < totalPaginas}">
                                 <c:if test="${fim < totalPaginas - 1}">
                                     <span style="align-self:center; padding:0 0.5rem;">...</span>
@@ -318,7 +304,6 @@
                                 <a href="${urlUltima}" class="btn btn-sm btn-outline">${totalPaginas}</a>
                             </c:if>
                             
-                            <!-- Botão Próxima -->
                             <c:if test="${paginaAtual < totalPaginas}">
                                 <c:url var="urlProxima" value="/relatorio/vendas">
                                     <c:if test="${not empty param.dataInicio}">
@@ -340,7 +325,6 @@
             </c:choose>
         </div>
         
-        <!-- Insights e Recomendações -->
         <div style="background:#f1f9ff; border-radius:8px; padding:1.5rem; margin-bottom:2rem; border-left:5px solid #3498db;">
             <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Insights</h3>
             

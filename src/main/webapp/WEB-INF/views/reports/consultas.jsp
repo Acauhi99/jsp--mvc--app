@@ -7,7 +7,6 @@
     <div class="container">
         <h1 class="section-title">Relatório de Consultas Veterinárias</h1>
         
-        <!-- Filtros -->
         <div class="card" style="padding:1.5rem; margin-bottom:2rem; background:#fff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
             <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Filtros</h3>
             
@@ -58,14 +57,12 @@
             </form>
         </div>
         
-        <!-- Resumo de Estatísticas -->
         <div style="display:flex; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem;">
             <div style="flex:1 1 220px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); border-left:5px solid #3498db;">
                 <div style="font-size:1.1rem; color:#666; margin-bottom:0.5rem;">Total de Consultas</div>
                 <div style="font-size:2.5rem; font-weight:bold; color:#2c3e50;">${totalConsultas}</div>
             </div>
-            
-            <!-- Consultas por Status -->
+ 
             <c:forEach var="entry" items="${consultasPorStatus}">
                 <c:if test="${entry.value > 0}">
                     <div style="flex:1 1 220px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); 
@@ -85,7 +82,6 @@
             </c:forEach>
         </div>
         
-        <!-- Distribuição por Tipo -->
         <div style="display:flex; flex-wrap:wrap; gap:2rem; margin-bottom:2rem;">
             <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Consultas por Tipo</h3>
@@ -106,8 +102,7 @@
                     </c:forEach>
                 </div>
             </div>
-            
-            <!-- Consultas por Veterinário -->
+        
             <div style="flex:1 1 400px; min-width:300px; background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Consultas por Veterinário</h3>
                 
@@ -127,7 +122,6 @@
             </div>
         </div>
         
-        <!-- Lista de Consultas -->
         <div style="background:#fff; border-radius:8px; padding:1.5rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin-bottom:2rem;">
             <h3 style="margin-bottom:1.5rem; color:#2c3e50; font-size:1.3rem;">Listagem de Consultas</h3>
             
@@ -179,8 +173,7 @@
                 </c:otherwise>
             </c:choose>
         </div>
-        
-        <!-- Insights e Recomendações -->
+     
         <div style="background:#f1f9ff; border-radius:8px; padding:1.5rem; margin-bottom:2rem; border-left:5px solid #3498db;">
             <h3 style="margin-bottom:1rem; color:#2c3e50; font-size:1.3rem;">Insights</h3>
             

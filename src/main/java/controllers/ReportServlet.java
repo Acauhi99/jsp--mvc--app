@@ -3,7 +3,6 @@ package controllers;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-import dtos.auth.LoginResponse;
 import repositories.ConsultaVeterinariaRepository;
 import repositories.IngressoRepository;
 import repositories.FuncionarioRepository;
@@ -39,15 +38,13 @@ public class ReportServlet extends HttpServlet {
     String path = req.getServletPath();
     HttpSession session = req.getSession(false);
 
-    // Verificar autenticação
     if (session == null || session.getAttribute("user") == null) {
       resp.sendRedirect(req.getContextPath() + "/auth/login");
       return;
     }
 
-    // Verificar se é administrador
-    LoginResponse login = (LoginResponse) session.getAttribute("user");
-    if (!"ADMINISTRADOR".equals(login.getRole())) {
+    String role = (String) session.getAttribute("role");
+    if (!"ADMINISTRADOR".equals(role)) {
       resp.sendError(HttpServletResponse.SC_FORBIDDEN);
       return;
     }
@@ -63,16 +60,14 @@ public class ReportServlet extends HttpServlet {
 
   private void gerarRelatorioConsultas(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    // Obter parâmetros de filtro
     String dataInicioStr = req.getParameter("dataInicio");
     String dataFimStr = req.getParameter("dataFim");
     String veterinarioId = req.getParameter("veterinarioId");
     String tipoConsulta = req.getParameter("tipoConsulta");
     String statusConsulta = req.getParameter("statusConsulta");
 
-    // Configurar datas padrão (últimos 30 dias se não especificado)
+    LocalDateTime dataInicio = LocalDateTime.now().minusDays(30);
     LocalDateTime dataFim = LocalDateTime.now();
-    LocalDateTime dataInicio = dataFim.minusDays(30);
 
     if (dataInicioStr != null && !dataInicioStr.isEmpty()) {
       dataInicio = LocalDateTime.parse(dataInicioStr + "T00:00:00");
@@ -82,57 +77,16 @@ public class ReportServlet extends HttpServlet {
       dataFim = LocalDateTime.parse(dataFimStr + "T23:59:59");
     }
 
-    // Buscar todas as consultas no período
     List<ConsultaVeterinaria> todasConsultas = consultaRepo.findByDateRange(dataInicio, dataFim);
+    List<ConsultaVeterinaria> consultas = filtrarConsultas(todasConsultas, veterinarioId, tipoConsulta, statusConsulta);
 
-    // Aplicar filtros adicionais
-    List<ConsultaVeterinaria> consultas = todasConsultas.stream()
-        .filter(c -> veterinarioId == null || veterinarioId.isEmpty() ||
-            (c.getVeterinario() != null && c.getVeterinario().getId().toString().equals(veterinarioId)))
-        .filter(c -> tipoConsulta == null || tipoConsulta.isEmpty() ||
-            (c.getTipoConsulta() != null && c.getTipoConsulta().toString().equals(tipoConsulta)))
-        .filter(c -> statusConsulta == null || statusConsulta.isEmpty() ||
-            (c.getStatus() != null && c.getStatus().toString().equals(statusConsulta)))
-        .collect(Collectors.toList());
-
-    // Calcular estatísticas
-    Map<TipoConsulta, Long> consultasPorTipo = new HashMap<>();
-    Map<StatusConsulta, Long> consultasPorStatus = new HashMap<>();
+    Map<TipoConsulta, Long> consultasPorTipo = inicializarMapaTipoConsulta();
+    Map<StatusConsulta, Long> consultasPorStatus = inicializarMapaStatusConsulta();
     Map<String, Long> consultasPorVeterinario = new HashMap<>();
 
-    for (TipoConsulta tipo : TipoConsulta.values()) {
-      consultasPorTipo.put(tipo, 0L);
-    }
-
-    for (StatusConsulta status : StatusConsulta.values()) {
-      consultasPorStatus.put(status, 0L);
-    }
-
-    for (ConsultaVeterinaria consulta : todasConsultas) {
-      // Contagem por tipo
-      if (consulta.getTipoConsulta() != null) {
-        consultasPorTipo.put(consulta.getTipoConsulta(),
-            consultasPorTipo.getOrDefault(consulta.getTipoConsulta(), 0L) + 1);
-      }
-
-      // Contagem por status
-      if (consulta.getStatus() != null) {
-        consultasPorStatus.put(consulta.getStatus(),
-            consultasPorStatus.getOrDefault(consulta.getStatus(), 0L) + 1);
-      }
-
-      // Contagem por veterinário
-      if (consulta.getVeterinario() != null) {
-        String nomeDr = consulta.getVeterinario().getNome();
-        consultasPorVeterinario.put(nomeDr,
-            consultasPorVeterinario.getOrDefault(nomeDr, 0L) + 1);
-      }
-    }
-
-    // Obter lista de veterinários para o filtro
+    calcularEstatisticasConsulta(todasConsultas, consultasPorTipo, consultasPorStatus, consultasPorVeterinario);
     List<Funcionario> veterinarios = funcionarioRepo.findByCargo(Cargo.VETERINARIO);
 
-    // Enviar dados para a view
     req.setAttribute("consultas", consultas);
     req.setAttribute("totalConsultas", todasConsultas.size());
     req.setAttribute("consultasPorTipo", consultasPorTipo);
@@ -144,83 +98,97 @@ public class ReportServlet extends HttpServlet {
     req.setAttribute("dataInicio", dataInicio.format(DATE_FORMATTER));
     req.setAttribute("dataFim", dataFim.format(DATE_FORMATTER));
 
-    // Encaminhar para a página JSP
     req.getRequestDispatcher("/WEB-INF/views/reports/consultas.jsp").forward(req, resp);
+  }
+
+  private Map<TipoConsulta, Long> inicializarMapaTipoConsulta() {
+    Map<TipoConsulta, Long> mapa = new HashMap<>();
+    for (TipoConsulta tipo : TipoConsulta.values()) {
+      mapa.put(tipo, 0L);
+    }
+    return mapa;
+  }
+
+  private Map<StatusConsulta, Long> inicializarMapaStatusConsulta() {
+    Map<StatusConsulta, Long> mapa = new HashMap<>();
+    for (StatusConsulta status : StatusConsulta.values()) {
+      mapa.put(status, 0L);
+    }
+    return mapa;
+  }
+
+  private List<ConsultaVeterinaria> filtrarConsultas(List<ConsultaVeterinaria> consultas,
+      String veterinarioId,
+      String tipoConsulta,
+      String statusConsulta) {
+    return consultas.stream()
+        .filter(c -> veterinarioId == null || veterinarioId.isEmpty() ||
+            (c.getVeterinario() != null && c.getVeterinario().getId().toString().equals(veterinarioId)))
+        .filter(c -> tipoConsulta == null || tipoConsulta.isEmpty() ||
+            (c.getTipoConsulta() != null && c.getTipoConsulta().toString().equals(tipoConsulta)))
+        .filter(c -> statusConsulta == null || statusConsulta.isEmpty() ||
+            (c.getStatus() != null && c.getStatus().toString().equals(statusConsulta)))
+        .collect(Collectors.toList());
+  }
+
+  private void calcularEstatisticasConsulta(List<ConsultaVeterinaria> consultas,
+      Map<TipoConsulta, Long> consultasPorTipo,
+      Map<StatusConsulta, Long> consultasPorStatus,
+      Map<String, Long> consultasPorVeterinario) {
+    for (ConsultaVeterinaria consulta : consultas) {
+      if (consulta.getTipoConsulta() != null) {
+        consultasPorTipo.put(consulta.getTipoConsulta(),
+            consultasPorTipo.getOrDefault(consulta.getTipoConsulta(), 0L) + 1);
+      }
+
+      if (consulta.getStatus() != null) {
+        consultasPorStatus.put(consulta.getStatus(),
+            consultasPorStatus.getOrDefault(consulta.getStatus(), 0L) + 1);
+      }
+
+      if (consulta.getVeterinario() != null) {
+        String nomeDr = consulta.getVeterinario().getNome();
+        consultasPorVeterinario.put(nomeDr,
+            consultasPorVeterinario.getOrDefault(nomeDr, 0L) + 1);
+      }
+    }
   }
 
   private void gerarRelatorioVendas(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    // Obter parâmetros de filtro
     String dataInicioStr = req.getParameter("dataInicio");
     String dataFimStr = req.getParameter("dataFim");
     String tipoIngresso = req.getParameter("tipoIngresso");
 
-    // Configurar datas padrão (últimos 30 dias se não especificado)
-    LocalDateTime dataFimTemp = LocalDateTime.now();
-    LocalDateTime dataInicioTemp = dataFimTemp.minusDays(30);
+    LocalDateTime dataInicio = LocalDateTime.now().minusDays(30);
+    LocalDateTime dataFim = LocalDateTime.now();
 
     if (dataInicioStr != null && !dataInicioStr.isEmpty()) {
-      dataInicioTemp = LocalDateTime.parse(dataInicioStr + "T00:00:00");
+      dataInicio = LocalDateTime.parse(dataInicioStr + "T00:00:00");
     }
 
     if (dataFimStr != null && !dataFimStr.isEmpty()) {
-      dataFimTemp = LocalDateTime.parse(dataFimStr + "T23:59:59");
+      dataFim = LocalDateTime.parse(dataFimStr + "T23:59:59");
     }
 
-    // Criar variáveis finais para uso nas lambdas
-    final LocalDateTime dataInicio = dataInicioTemp;
-    final LocalDateTime dataFim = dataFimTemp;
-
-    // Buscar todos os ingressos
     List<Ingresso> todosIngressos = ingressoRepo.findAll();
+    List<Ingresso> ingressos = filtrarIngressos(todosIngressos, dataInicio, dataFim, tipoIngresso);
 
-    // Filtrar por período e tipo
-    List<Ingresso> ingressos = todosIngressos.stream()
-        .filter(i -> i.getDataCompra() != null &&
-            (i.getDataCompra().isAfter(dataInicio) && i.getDataCompra().isBefore(dataFim)))
-        .filter(i -> tipoIngresso == null || tipoIngresso.isEmpty() ||
-            i.getTipo().toString().equals(tipoIngresso))
-        .collect(Collectors.toList());
-
-    // Calcular estatísticas
-    double valorTotal = ingressos.stream()
-        .mapToDouble(Ingresso::getValor)
-        .sum();
-
+    double valorTotal = ingressos.stream().mapToDouble(Ingresso::getValor).sum();
     int totalIngressos = ingressos.size();
 
     Map<TipoIngresso, List<Ingresso>> ingressosPorTipo = ingressos.stream()
         .collect(Collectors.groupingBy(Ingresso::getTipo));
 
-    Map<TipoIngresso, DoubleSummaryStatistics> estatisticasPorTipo = new HashMap<>();
-    for (TipoIngresso tipo : TipoIngresso.values()) {
-      List<Ingresso> ingressosTipo = ingressosPorTipo.getOrDefault(tipo, new ArrayList<>());
-      DoubleSummaryStatistics stats = ingressosTipo.stream()
-          .mapToDouble(Ingresso::getValor)
-          .summaryStatistics();
-      estatisticasPorTipo.put(tipo, stats);
-    }
+    Map<TipoIngresso, DoubleSummaryStatistics> estatisticasPorTipo = calcularEstatisticasPorTipo(ingressosPorTipo);
+    Map<String, Double> vendasPorDia = calcularVendasPorDia(ingressos, dataInicio, dataFim);
 
-    // Calcular vendas por dia para gráfico
-    Map<String, Double> vendasPorDia = new HashMap<>();
-    LocalDateTime atual = dataInicio;
-    while (!atual.isAfter(dataFim)) {
-      String diaFormatado = atual.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-      LocalDateTime finalAtual = atual;
-
-      double valorDia = ingressos.stream()
-          .filter(i -> i.getDataCompra() != null &&
-              i.getDataCompra().toLocalDate().equals(finalAtual.toLocalDate()))
-          .mapToDouble(Ingresso::getValor)
-          .sum();
-
-      vendasPorDia.put(diaFormatado, valorDia);
-      atual = atual.plusDays(1);
-    }
-
-    // Parâmetros de paginação
     int paginaAtual = 1;
-    int tamanhoPagina = 10; // Fixado em 10 itens
+    int tamanhoPagina = 10;
+    int totalRegistros = ingressos.size();
+    int totalPaginas = (int) Math.ceil((double) totalRegistros / tamanhoPagina);
+    int inicio = 1;
+    int fim = totalPaginas;
 
     try {
       String paginaParam = req.getParameter("pagina");
@@ -228,23 +196,16 @@ public class ReportServlet extends HttpServlet {
         paginaAtual = Integer.parseInt(paginaParam);
         if (paginaAtual < 1)
           paginaAtual = 1;
+        if (paginaAtual > totalPaginas && totalPaginas > 0)
+          paginaAtual = totalPaginas;
       }
     } catch (NumberFormatException e) {
-      // Usar valores padrão em caso de erro
+      paginaAtual = 1;
     }
 
-    // Calcular total de páginas
-    int totalPaginas = (int) Math.ceil((double) ingressos.size() / tamanhoPagina);
-    if (paginaAtual > totalPaginas && totalPaginas > 0) {
-      paginaAtual = totalPaginas;
-    }
+    inicio = Math.max(1, paginaAtual - 2);
+    fim = Math.min(totalPaginas, paginaAtual + 2);
 
-    // Calcular intervalo de páginas a exibir (para mostrar 5 páginas centralizadas
-    // na atual)
-    int inicio = Math.max(1, paginaAtual - 2);
-    int fim = Math.min(totalPaginas, paginaAtual + 2);
-
-    // Ajustar para sempre mostrar 5 páginas quando possível
     if (fim - inicio < 4 && totalPaginas >= 5) {
       if (paginaAtual < 3) {
         fim = Math.min(5, totalPaginas);
@@ -253,11 +214,6 @@ public class ReportServlet extends HttpServlet {
       }
     }
 
-    // Adicionar aos atributos da requisição
-    req.setAttribute("inicio", inicio);
-    req.setAttribute("fim", fim);
-
-    // Subconjunto de ingressos para a página atual
     List<Ingresso> ingressosPaginados;
     if (ingressos.isEmpty()) {
       ingressosPaginados = ingressos;
@@ -267,15 +223,18 @@ public class ReportServlet extends HttpServlet {
       ingressosPaginados = ingressos.subList(inicioPaginacao, fimPaginacao);
     }
 
-    // Adicionar atributos de paginação
+    long ingressosUtilizados = ingressos.stream().filter(Ingresso::isUtilizado).count();
+    double percentualUtilizados = totalIngressos > 0 ? (double) ingressosUtilizados / totalIngressos * 100 : 0;
+
+    req.setAttribute("ingressos", ingressos);
     req.setAttribute("ingressosPaginados", ingressosPaginados);
     req.setAttribute("paginaAtual", paginaAtual);
     req.setAttribute("totalPaginas", totalPaginas);
     req.setAttribute("tamanhoPagina", tamanhoPagina);
-    req.setAttribute("totalRegistros", ingressos.size());
+    req.setAttribute("totalRegistros", totalRegistros);
+    req.setAttribute("inicio", inicio);
+    req.setAttribute("fim", fim);
 
-    // Enviar dados para a view
-    req.setAttribute("ingressos", ingressos);
     req.setAttribute("totalIngressos", totalIngressos);
     req.setAttribute("valorTotal", valorTotal);
     req.setAttribute("ingressosPorTipo", ingressosPorTipo);
@@ -285,17 +244,57 @@ public class ReportServlet extends HttpServlet {
     req.setAttribute("dataFim", dataFim.format(DATE_FORMATTER));
     req.setAttribute("vendasPorDia", vendasPorDia);
 
-    // Percentual de ingressos utilizados
-    long ingressosUtilizados = ingressos.stream()
-        .filter(Ingresso::isUtilizado)
-        .count();
-
-    double percentualUtilizados = totalIngressos > 0 ? (double) ingressosUtilizados / totalIngressos * 100 : 0;
-
     req.setAttribute("ingressosUtilizados", ingressosUtilizados);
     req.setAttribute("percentualUtilizados", percentualUtilizados);
 
-    // Encaminhar para a página JSP
     req.getRequestDispatcher("/WEB-INF/views/reports/vendas.jsp").forward(req, resp);
+  }
+
+  private List<Ingresso> filtrarIngressos(List<Ingresso> ingressos,
+      LocalDateTime dataInicio,
+      LocalDateTime dataFim,
+      String tipoIngresso) {
+    return ingressos.stream()
+        .filter(i -> i.getDataCompra() != null &&
+            (i.getDataCompra().isAfter(dataInicio) && i.getDataCompra().isBefore(dataFim)))
+        .filter(i -> tipoIngresso == null || tipoIngresso.isEmpty() ||
+            i.getTipo().toString().equals(tipoIngresso))
+        .collect(Collectors.toList());
+  }
+
+  private Map<TipoIngresso, DoubleSummaryStatistics> calcularEstatisticasPorTipo(
+      Map<TipoIngresso, List<Ingresso>> ingressosPorTipo) {
+    Map<TipoIngresso, DoubleSummaryStatistics> estatisticas = new HashMap<>();
+    for (TipoIngresso tipo : TipoIngresso.values()) {
+      List<Ingresso> ingressosTipo = ingressosPorTipo.getOrDefault(tipo, new ArrayList<>());
+      DoubleSummaryStatistics stats = ingressosTipo.stream()
+          .mapToDouble(Ingresso::getValor)
+          .summaryStatistics();
+      estatisticas.put(tipo, stats);
+    }
+    return estatisticas;
+  }
+
+  private Map<String, Double> calcularVendasPorDia(List<Ingresso> ingressos,
+      LocalDateTime dataInicio,
+      LocalDateTime dataFim) {
+    Map<String, Double> vendasPorDia = new HashMap<>();
+    LocalDateTime atual = dataInicio;
+
+    while (!atual.isAfter(dataFim)) {
+      String diaFormatado = atual.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+      LocalDateTime diaAtual = atual;
+
+      double valorDia = ingressos.stream()
+          .filter(i -> i.getDataCompra() != null &&
+              i.getDataCompra().toLocalDate().equals(diaAtual.toLocalDate()))
+          .mapToDouble(Ingresso::getValor)
+          .sum();
+
+      vendasPorDia.put(diaFormatado, valorDia);
+      atual = atual.plusDays(1);
+    }
+
+    return vendasPorDia;
   }
 }

@@ -79,29 +79,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const initConfirmationModal = function () {
     const modal = document.getElementById("confirmModal");
-    if (!modal) return; // Se não houver modal na página, não faz nada
+    if (!modal) return; 
 
     const deleteButtons = document.querySelectorAll(".btn-delete.action-btn");
     const deleteForm = document.getElementById("deleteForm");
     const deleteId = document.getElementById("deleteId");
     const cancelButton = document.getElementById("cancelDelete");
 
-    // Se não encontrar os elementos necessários, retorna
     if (!deleteButtons.length || !deleteForm || !deleteId || !cancelButton)
       return;
 
-    // Configura os botões de exclusão para abrir o modal
     deleteButtons.forEach(function (button) {
       button.addEventListener("click", function (e) {
         e.preventDefault();
         const id = this.closest("form").querySelector('input[name="id"]').value;
         const action = this.closest("form").getAttribute("action");
 
-        // Configura o modal com os dados corretos
         deleteId.value = id;
         deleteForm.action = action;
 
-        // Personaliza mensagem se necessário (exemplo com nome de visitante)
         const row = this.closest("tr");
         if (row) {
           const name = row.querySelector("td:first-child")?.textContent;
@@ -113,17 +109,14 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         }
 
-        // Mostra o modal
         modal.style.display = "flex";
       });
     });
 
-    // Fecha o modal ao clicar em cancelar
     cancelButton.addEventListener("click", function () {
       modal.style.display = "none";
     });
 
-    // Fecha o modal se clicar fora da caixa
     modal.addEventListener("click", function (e) {
       if (e.target === modal) {
         modal.style.display = "none";

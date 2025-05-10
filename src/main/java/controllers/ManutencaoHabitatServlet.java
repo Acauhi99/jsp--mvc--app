@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @WebServlet({ "/manutencao", "/manutencao/novo", "/manutencao/salvar", "/manutencao/detalhes", "/manutencao/editar" })
 public class ManutencaoHabitatServlet extends HttpServlet {
@@ -59,58 +60,17 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
   private void listarSolicitacoes(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    // Parâmetros de filtro
     String statusParam = req.getParameter("status");
     String prioridadeParam = req.getParameter("prioridade");
     String habitatParam = req.getParameter("habitat");
     String responsavelParam = req.getParameter("responsavel");
-    String pageParam = req.getParameter("page");
 
-    // Busca todos habitats para o filtro do select
-    List<Habitat> habitats = habitatRepo.findAll();
-    req.setAttribute("habitats", habitats);
-
-    // Busca todos manutentores para o filtro do select
-    List<Funcionario> manutentores = funcionarioRepo.findByCargo(Cargo.MANUTENCAO);
-    req.setAttribute("manutentores", manutentores);
-
-    // Busca todas manutenções
+    carregarDadosSelecao(req);
     List<ManutencaoHabitat> manutencoes = manutencaoRepo.findAll();
 
-    // Filtragem
-    if (statusParam != null && !statusParam.isEmpty()) {
-      manutencoes.removeIf(m -> !m.getStatus().name().equals(statusParam));
-    }
-    if (prioridadeParam != null && !prioridadeParam.isEmpty()) {
-      manutencoes.removeIf(m -> !m.getPrioridade().name().equals(prioridadeParam));
-    }
-    if (habitatParam != null && !habitatParam.isEmpty()) {
-      manutencoes.removeIf(m -> !m.getHabitat().getId().toString().equals(habitatParam));
-    }
-    if (responsavelParam != null && !responsavelParam.isEmpty()) {
-      manutencoes
-          .removeIf(m -> m.getResponsavel() == null || !m.getResponsavel().getId().toString().equals(responsavelParam));
-    }
+    manutencoes = filtrarManutencoes(manutencoes, statusParam, prioridadeParam, habitatParam, responsavelParam);
+    List<ManutencaoHabitat> pageList = aplicarPaginacao(req, resp, manutencoes);
 
-    // Paginação
-    int pageSize = 10;
-    int page = 1;
-    if (pageParam != null) {
-      try {
-        page = Integer.parseInt(pageParam);
-        if (page < 1)
-          page = 1;
-      } catch (NumberFormatException ignored) {
-      }
-    }
-    int totalItems = manutencoes.size();
-    int totalPages = (int) Math.ceil((double) totalItems / pageSize);
-    int fromIndex = (page - 1) * pageSize;
-    int toIndex = Math.min(fromIndex + pageSize, totalItems);
-    List<ManutencaoHabitat> pageList = manutencoes.subList(
-        Math.min(fromIndex, totalItems), Math.min(toIndex, totalItems));
-
-    // Adiciona data de solicitação como atributo
     for (ManutencaoHabitat m : manutencoes) {
       if (m.getDataSolicitacao() != null) {
         req.setAttribute("dataSolicitacao_" + m.getId(), Timestamp.valueOf(m.getDataSolicitacao()));
@@ -118,21 +78,96 @@ public class ManutencaoHabitatServlet extends HttpServlet {
     }
 
     req.setAttribute("manutencoes", pageList);
+    req.getRequestDispatcher("/WEB-INF/views/manutencao/list.jsp").forward(req, resp);
+  }
+
+  private List<ManutencaoHabitat> filtrarManutencoes(List<ManutencaoHabitat> manutencoes,
+      String statusParam,
+      String prioridadeParam,
+      String habitatParam,
+      String responsavelParam) {
+    List<ManutencaoHabitat> resultado = new ArrayList<>(manutencoes);
+
+    if (statusParam != null && !statusParam.isEmpty()) {
+      resultado = resultado.stream()
+          .filter(m -> m.getStatus().name().equals(statusParam))
+          .collect(Collectors.toList());
+    }
+
+    if (prioridadeParam != null && !prioridadeParam.isEmpty()) {
+      resultado = resultado.stream()
+          .filter(m -> m.getPrioridade().name().equals(prioridadeParam))
+          .collect(Collectors.toList());
+    }
+
+    if (habitatParam != null && !habitatParam.isEmpty()) {
+      resultado = resultado.stream()
+          .filter(m -> m.getHabitat().getId().toString().equals(habitatParam))
+          .collect(Collectors.toList());
+    }
+
+    if (responsavelParam != null && !responsavelParam.isEmpty()) {
+      resultado = resultado.stream()
+          .filter(m -> m.getResponsavel() != null &&
+              m.getResponsavel().getId().toString().equals(responsavelParam))
+          .collect(Collectors.toList());
+    }
+
+    return resultado;
+  }
+
+  private List<ManutencaoHabitat> aplicarPaginacao(HttpServletRequest req, HttpServletResponse resp,
+      List<ManutencaoHabitat> lista) {
+    int pageSize = 10;
+    int page = getPageParam(req);
+    int totalItems = lista.size();
+    int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+    int fromIndex = (page - 1) * pageSize;
+    int toIndex = Math.min(fromIndex + pageSize, totalItems);
+
     req.setAttribute("page", page);
     req.setAttribute("totalPages", totalPages);
 
-    req.getRequestDispatcher("/WEB-INF/views/manutencao/list.jsp").forward(req, resp);
+    if (totalItems == 0) {
+      return new ArrayList<>();
+    }
+
+    return lista.subList(Math.min(fromIndex, totalItems), Math.min(toIndex, totalItems));
+  }
+
+  private int getPageParam(HttpServletRequest req) {
+    String pageParam = req.getParameter("page");
+    if (pageParam == null) {
+      return 1;
+    }
+
+    try {
+      int page = Integer.parseInt(pageParam);
+      return page < 1 ? 1 : page;
+    } catch (NumberFormatException e) {
+      return 1;
+    }
+  }
+
+  private void carregarDadosSelecao(HttpServletRequest req) {
+    List<Habitat> habitats = habitatRepo.findAll();
+    List<Funcionario> manutentores = funcionarioRepo.findByCargo(Cargo.MANUTENCAO);
+
+    req.setAttribute("habitats", habitats);
+    req.setAttribute("manutentores", manutentores);
+    req.setAttribute("tiposManutencao", TipoManutencao.values());
+    req.setAttribute("prioridades", PrioridadeManutencao.values());
+    req.setAttribute("statusOpcoes", StatusManutencao.values());
   }
 
   private void mostrarFormulario(HttpServletRequest req, HttpServletResponse resp, ManutencaoHabitat manutencao)
       throws ServletException, IOException {
-    List<Habitat> habitats = habitatRepo.findAll();
-    List<Funcionario> manutentores = funcionarioRepo.findByCargo(Cargo.MANUTENCAO);
-    req.setAttribute("habitats", habitats);
-    req.setAttribute("manutentores", manutentores);
+    carregarDadosSelecao(req);
+
     if (manutencao != null) {
       req.setAttribute("manutencao", manutencao);
     }
+
     req.getRequestDispatcher("/WEB-INF/views/manutencao/form.jsp").forward(req, resp);
   }
 
@@ -143,16 +178,21 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       resp.sendRedirect(req.getContextPath() + "/manutencao");
       return;
     }
-    Optional<ManutencaoHabitat> manutencaoOpt = manutencaoRepo.findById(UUID.fromString(id));
-    if (manutencaoOpt.isPresent()) {
-      List<Habitat> habitats = habitatRepo.findAll();
-      List<Funcionario> manutentores = funcionarioRepo.findByCargo(Cargo.MANUTENCAO);
 
-      req.setAttribute("habitats", habitats);
-      req.setAttribute("manutentores", manutentores);
+    try {
+      UUID uuid = UUID.fromString(id);
+      Optional<ManutencaoHabitat> manutencaoOpt = manutencaoRepo.findById(uuid);
+
+      if (manutencaoOpt.isEmpty()) {
+        resp.sendRedirect(req.getContextPath() + "/manutencao");
+        return;
+      }
+
+      carregarDadosSelecao(req);
       req.setAttribute("manutencao", manutencaoOpt.get());
       req.getRequestDispatcher("/WEB-INF/views/manutencao/edit.jsp").forward(req, resp);
-    } else {
+
+    } catch (IllegalArgumentException e) {
       resp.sendRedirect(req.getContextPath() + "/manutencao");
     }
   }
@@ -164,11 +204,20 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       resp.sendRedirect(req.getContextPath() + "/manutencao");
       return;
     }
-    Optional<ManutencaoHabitat> manutencaoOpt = manutencaoRepo.findById(UUID.fromString(id));
-    if (manutencaoOpt.isPresent()) {
+
+    try {
+      UUID uuid = UUID.fromString(id);
+      Optional<ManutencaoHabitat> manutencaoOpt = manutencaoRepo.findById(uuid);
+
+      if (manutencaoOpt.isEmpty()) {
+        resp.sendRedirect(req.getContextPath() + "/manutencao");
+        return;
+      }
+
       req.setAttribute("manutencao", manutencaoOpt.get());
       req.getRequestDispatcher("/WEB-INF/views/manutencao/details.jsp").forward(req, resp);
-    } else {
+
+    } catch (IllegalArgumentException e) {
       resp.sendRedirect(req.getContextPath() + "/manutencao");
     }
   }
@@ -177,51 +226,20 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       throws ServletException, IOException {
     try {
       String id = req.getParameter("id");
-      UUID habitatId = UUID.fromString(req.getParameter("habitat"));
-      Habitat habitat = habitatRepo.findById(habitatId).orElse(null);
-      TipoManutencao tipo = TipoManutencao.valueOf(req.getParameter("tipoManutencao"));
-      PrioridadeManutencao prioridade = PrioridadeManutencao.valueOf(req.getParameter("prioridade"));
+      Habitat habitat = obterHabitat(req);
+      TipoManutencao tipo = obterTipoManutencao(req);
+      PrioridadeManutencao prioridade = obterPrioridade(req);
       String descricao = req.getParameter("descricao");
-      LocalDateTime dataProgramada = null;
-      if (req.getParameter("dataProgramada") != null && !req.getParameter("dataProgramada").isEmpty()) {
-        dataProgramada = LocalDateTime.parse(req.getParameter("dataProgramada"));
-      }
-
-      Object userObj = req.getSession().getAttribute("user");
-      Funcionario solicitante = null;
-
-      if (userObj instanceof dtos.auth.LoginResponse) {
-        dtos.auth.LoginResponse loginResponse = (dtos.auth.LoginResponse) userObj;
-        UUID userId = loginResponse.getUserDetails().getId();
-        solicitante = funcionarioRepo.findById(userId).orElse(null);
-      } else if (userObj instanceof Funcionario) {
-        solicitante = (Funcionario) userObj;
-      }
+      LocalDateTime dataProgramada = obterDataProgramada(req);
+      Funcionario solicitante = obterSolicitante(req);
 
       if (solicitante == null) {
         throw new ServletException("Usuário não autenticado corretamente");
       }
 
-      ManutencaoHabitat manutencao;
-      if (id != null && !id.isEmpty()) {
-        manutencao = manutencaoRepo.findById(UUID.fromString(id)).orElse(new ManutencaoHabitat());
-      } else {
-        manutencao = new ManutencaoHabitat();
-        manutencao.setStatus(StatusManutencao.PENDENTE);
-        manutencao.setDataSolicitacao(LocalDateTime.now());
-      }
-      manutencao.setHabitat(habitat);
-      manutencao.setTipoManutencao(tipo);
-      manutencao.setPrioridade(prioridade);
-      manutencao.setDescricao(descricao);
-      manutencao.setDataProgramada(dataProgramada);
-      manutencao.setSolicitante(solicitante);
-
-      String responsavelId = req.getParameter("responsavel");
-      Funcionario responsavel = null;
-      if (responsavelId != null && !responsavelId.isEmpty()) {
-        responsavel = funcionarioRepo.findById(UUID.fromString(responsavelId)).orElse(null);
-      }
+      ManutencaoHabitat manutencao = criarOuAtualizarManutencao(id, habitat, tipo, prioridade,
+          descricao, dataProgramada, solicitante);
+      Funcionario responsavel = obterResponsavel(req);
       manutencao.setResponsavel(responsavel);
 
       if (id != null && !id.isEmpty()) {
@@ -229,16 +247,112 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       } else {
         manutencaoRepo.save(manutencao);
       }
+
       resp.sendRedirect(req.getContextPath() + "/manutencao");
+
     } catch (Exception e) {
-      e.printStackTrace();
       req.setAttribute("error", "Erro ao salvar solicitação: " + e.getMessage());
       String id = req.getParameter("id");
+
       if (id != null && !id.isEmpty()) {
         editarSolicitacao(req, resp);
       } else {
         mostrarFormulario(req, resp, null);
       }
     }
+  }
+
+  private Habitat obterHabitat(HttpServletRequest req) throws Exception {
+    String habitatId = req.getParameter("habitat");
+    if (habitatId == null || habitatId.isEmpty()) {
+      throw new Exception("Habitat é obrigatório");
+    }
+
+    UUID uuid = UUID.fromString(habitatId);
+    return habitatRepo.findById(uuid)
+        .orElseThrow(() -> new Exception("Habitat não encontrado"));
+  }
+
+  private TipoManutencao obterTipoManutencao(HttpServletRequest req) {
+    String tipoStr = req.getParameter("tipoManutencao");
+    return TipoManutencao.valueOf(tipoStr);
+  }
+
+  private PrioridadeManutencao obterPrioridade(HttpServletRequest req) {
+    String prioridadeStr = req.getParameter("prioridade");
+    return PrioridadeManutencao.valueOf(prioridadeStr);
+  }
+
+  private LocalDateTime obterDataProgramada(HttpServletRequest req) {
+    String dataStr = req.getParameter("dataProgramada");
+    if (dataStr == null || dataStr.isEmpty()) {
+      return null;
+    }
+    return LocalDateTime.parse(dataStr);
+  }
+
+  private Funcionario obterSolicitante(HttpServletRequest req) {
+    HttpSession session = req.getSession(false);
+    if (session == null) {
+      return null;
+    }
+
+    Object userObj = session.getAttribute("user");
+    if (userObj instanceof Funcionario) {
+      return (Funcionario) userObj;
+    }
+
+    Object userIdObj = session.getAttribute("userId");
+    if (userIdObj instanceof UUID) {
+      UUID userId = (UUID) userIdObj;
+      return funcionarioRepo.findById(userId).orElse(null);
+    }
+
+    if (userIdObj instanceof String) {
+      try {
+        UUID userId = UUID.fromString((String) userIdObj);
+        return funcionarioRepo.findById(userId).orElse(null);
+      } catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  private Funcionario obterResponsavel(HttpServletRequest req) {
+    String responsavelId = req.getParameter("responsavel");
+    if (responsavelId == null || responsavelId.isEmpty()) {
+      return null;
+    }
+
+    UUID uuid = UUID.fromString(responsavelId);
+    return funcionarioRepo.findById(uuid).orElse(null);
+  }
+
+  private ManutencaoHabitat criarOuAtualizarManutencao(String id, Habitat habitat,
+      TipoManutencao tipo,
+      PrioridadeManutencao prioridade,
+      String descricao,
+      LocalDateTime dataProgramada,
+      Funcionario solicitante) {
+    ManutencaoHabitat manutencao;
+
+    if (id != null && !id.isEmpty()) {
+      manutencao = manutencaoRepo.findById(UUID.fromString(id)).orElse(new ManutencaoHabitat());
+    } else {
+      manutencao = new ManutencaoHabitat();
+      manutencao.setStatus(StatusManutencao.PENDENTE);
+      manutencao.setDataSolicitacao(LocalDateTime.now());
+    }
+
+    manutencao.setHabitat(habitat);
+    manutencao.setTipoManutencao(tipo);
+    manutencao.setPrioridade(prioridade);
+    manutencao.setDescricao(descricao);
+    manutencao.setDataProgramada(dataProgramada);
+    manutencao.setSolicitante(solicitante);
+
+    return manutencao;
   }
 }

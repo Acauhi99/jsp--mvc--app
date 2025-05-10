@@ -7,20 +7,20 @@
             <div class="menu-header">
                 <h3 class="menu-title
                     <c:choose>
-                        <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}"> admin</c:when>
-                        <c:when test="${sessionScope.user.role eq 'FUNCIONARIO' || sessionScope.user.role eq 'VETERINARIO' || sessionScope.user.role eq 'MANUTENCAO'}"> funcionario</c:when>
-                        <c:when test="${sessionScope.user.role eq 'VISITANTE'}"> visitante</c:when>
+                        <c:when test="${sessionScope.role eq 'ADMINISTRADOR'}"> admin</c:when>
+                        <c:when test="${sessionScope.role eq 'FUNCIONARIO' || sessionScope.role eq 'VETERINARIO' || sessionScope.role eq 'MANUTENCAO'}"> funcionario</c:when>
+                        <c:when test="${sessionScope.role eq 'VISITANTE'}"> visitante</c:when>
                         <c:otherwise> outro</c:otherwise>
                     </c:choose>
                 ">
-                    Painel de Controle: ${sessionScope.user.role}
+                    Painel de Controle: ${sessionScope.role}
                 </h3>
             </div>
             
             <div class="menu-items">
                 <c:choose>
                     <%-- Menu para Administrador --%>
-                    <c:when test="${sessionScope.user.role eq 'ADMINISTRADOR'}">
+                    <c:when test="${sessionScope.role eq 'ADMINISTRADOR'}">
                         <a href="${pageContext.request.contextPath}/dashboard/admin"><i class="menu-icon">📊</i> Dashboard</a>
                         
                         <span class="separator"></span>
@@ -52,7 +52,7 @@
                     </c:when>
                     
                     <%-- Menu para Veterinários --%>
-                    <c:when test="${sessionScope.user.role eq 'VETERINARIO'}">
+                    <c:when test="${sessionScope.role eq 'VETERINARIO'}">
                         <a href="${pageContext.request.contextPath}/dashboard/funcionario"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/animal"><i class="menu-icon">🦁</i> Animais</a>
                         
@@ -64,7 +64,7 @@
                     </c:when>
                     
                     <%-- Menu para Equipe de Manutenção --%>
-                    <c:when test="${sessionScope.user.role eq 'MANUTENCAO'}">
+                    <c:when test="${sessionScope.role eq 'MANUTENCAO'}">
                         <a href="${pageContext.request.contextPath}/dashboard/funcionario"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>
                         
@@ -74,7 +74,7 @@
                     </c:when>
                     
                     <%-- Menu para Visitantes --%>
-                    <c:when test="${sessionScope.user.role eq 'VISITANTE'}">
+                    <c:when test="${sessionScope.role eq 'VISITANTE'}">
                         <a href="${pageContext.request.contextPath}/dashboard/visitor"><i class="menu-icon">📊</i> Dashboard</a>
                         <a href="${pageContext.request.contextPath}/animal/galeria"><i class="menu-icon">🦁</i> Animais</a>
                         <a href="${pageContext.request.contextPath}/habitat"><i class="menu-icon">🏕️</i> Habitats</a>

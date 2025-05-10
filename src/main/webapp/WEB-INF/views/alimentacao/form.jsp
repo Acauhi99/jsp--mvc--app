@@ -69,7 +69,7 @@
                             <c:if test="${funcionario.cargo == 'VETERINARIO'}">
                                 <option value="${funcionario.id}" 
                                     ${not empty alimentacao && alimentacao.funcionarioResponsavel.id == funcionario.id ? 'selected' : ''}
-                                    ${empty alimentacao && sessionScope.user.userDetails.id == funcionario.id ? 'selected' : ''}>
+                                    ${empty alimentacao && sessionScope.userId == funcionario.id ? 'selected' : ''}>
                                     ${funcionario.nome}
                                 </option>
                             </c:if>

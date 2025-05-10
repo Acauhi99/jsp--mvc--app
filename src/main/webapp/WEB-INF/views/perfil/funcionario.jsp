@@ -16,7 +16,7 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Cargo:</span>
-                    <span class="detail-value">${sessionScope.user.role}</span>
+                    <span class="detail-value">${sessionScope.role}</span>
                 </div>
             </div>
         </div>

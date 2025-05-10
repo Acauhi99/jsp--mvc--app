@@ -27,7 +27,7 @@
             <button type="submit" class="btn btn-primary">Filtrar</button>
         </form>
 
-        <c:if test="${sessionScope.user.userDetails.role == 'VETERINARIO' || sessionScope.user.userDetails.role == 'ADMINISTRADOR'}">
+        <c:if test="${sessionScope.role eq 'VETERINARIO' || sessionScope.role eq 'ADMINISTRADOR'}">
             <div style="margin-bottom:1.5rem;">
                 <a href="${pageContext.request.contextPath}/animal/novo" class="btn btn-primary">
                     Registrar Animal

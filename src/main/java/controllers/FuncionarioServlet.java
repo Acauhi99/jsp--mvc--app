@@ -5,7 +5,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Funcionario;
 import models.Funcionario.Cargo;
-import dtos.auth.LoginResponse;
 import repositories.FuncionarioRepository;
 
 import java.io.IOException;
@@ -15,8 +14,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 @WebServlet(urlPatterns = { "/funcionario", "/funcionario/veterinario", "/funcionario/novo", "/funcionario/editar",
-    "/funcionario/detalhes",
-    "/funcionario/excluir" })
+    "/funcionario/detalhes", "/funcionario/excluir" })
 public class FuncionarioServlet extends HttpServlet {
 
   private final FuncionarioRepository funcionarioRepository;
@@ -26,114 +24,108 @@ public class FuncionarioServlet extends HttpServlet {
   }
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String path = req.getServletPath();
-    HttpSession session = req.getSession(false);
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    String path = request.getServletPath();
 
-    // Verificar autenticação
-    if (session == null || session.getAttribute("user") == null) {
-      resp.sendRedirect(req.getContextPath() + "/auth/login");
+    if (!verificarAcesso(request, response)) {
       return;
     }
 
-    // Verificar se é administrador
-    LoginResponse login = (LoginResponse) session.getAttribute("user");
-    if (!"ADMINISTRADOR".equals(login.getRole())) {
-      resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
-
-    // Processar as diferentes rotas
     switch (path) {
       case "/funcionario":
-        listarFuncionarios(req, resp);
+        listarFuncionarios(request, response);
         break;
       case "/funcionario/veterinario":
-        listarVeterinarios(req, resp);
+        listarVeterinarios(request, response);
         break;
       case "/funcionario/novo":
-        exibirFormulario(req, resp, null);
+        exibirFormulario(request, response, null);
         break;
       case "/funcionario/editar":
-        editarFuncionario(req, resp);
+        editarFuncionario(request, response);
         break;
       case "/funcionario/detalhes":
-        detalhesFuncionario(req, resp);
+        detalhesFuncionario(request, response);
         break;
       default:
-        resp.sendRedirect(req.getContextPath() + "/funcionario");
+        response.sendRedirect(request.getContextPath() + "/funcionario");
         break;
     }
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String path = req.getServletPath();
-    HttpSession session = req.getSession(false);
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    String path = request.getServletPath();
 
-    // Verificar autenticação
-    if (session == null || session.getAttribute("user") == null) {
-      resp.sendRedirect(req.getContextPath() + "/auth/login");
+    if (!verificarAcesso(request, response)) {
       return;
     }
 
-    // Verificar se é administrador
-    LoginResponse login = (LoginResponse) session.getAttribute("user");
-    if (!"ADMINISTRADOR".equals(login.getRole())) {
-      resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
-
-    // Processar as diferentes rotas
     if ("/funcionario/novo".equals(path) || "/funcionario/editar".equals(path)) {
-      salvarFuncionario(req, resp);
+      salvarFuncionario(request, response);
     } else if ("/funcionario/excluir".equals(path)) {
-      excluirFuncionario(req, resp);
+      excluirFuncionario(request, response);
     } else {
-      resp.sendRedirect(req.getContextPath() + "/funcionario");
+      response.sendRedirect(request.getContextPath() + "/funcionario");
     }
   }
 
-  private void listarFuncionarios(HttpServletRequest req, HttpServletResponse resp)
+  private boolean verificarAcesso(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    HttpSession session = request.getSession(false);
+
+    if (session == null || session.getAttribute("user") == null) {
+      response.sendRedirect(request.getContextPath() + "/auth/login");
+      return false;
+    }
+
+    String role = (String) session.getAttribute("role");
+    if (!"ADMINISTRADOR".equals(role)) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return false;
+    }
+
+    return true;
+  }
+
+  private void listarFuncionarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     List<Funcionario> funcionarios = funcionarioRepository.findAll();
-    req.setAttribute("funcionarios", funcionarios);
-    req.getRequestDispatcher("/WEB-INF/views/funcionario/list.jsp").forward(req, resp);
+    request.setAttribute("funcionarios", funcionarios);
+    request.getRequestDispatcher("/WEB-INF/views/funcionario/list.jsp").forward(request, response);
   }
 
-  private void listarVeterinarios(HttpServletRequest req, HttpServletResponse resp)
+  private void listarVeterinarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     List<Funcionario> veterinarios = funcionarioRepository.findByCargo(Cargo.VETERINARIO);
-    req.setAttribute("veterinarios", veterinarios);
-    req.getRequestDispatcher("/WEB-INF/views/veterinario/list.jsp").forward(req, resp);
+    request.setAttribute("veterinarios", veterinarios);
+    request.getRequestDispatcher("/WEB-INF/views/veterinario/list.jsp").forward(request, response);
   }
 
-  private void exibirFormulario(HttpServletRequest req, HttpServletResponse resp, Funcionario funcionario)
+  private void exibirFormulario(HttpServletRequest request, HttpServletResponse response, Funcionario funcionario)
       throws ServletException, IOException {
-    String tipoFuncionario = req.getParameter("tipo");
+    String tipoFuncionario = request.getParameter("tipo");
     if (tipoFuncionario == null) {
-      tipoFuncionario = "VETERINARIO"; // Valor padrão
+      tipoFuncionario = "VETERINARIO";
     }
 
     if (funcionario != null) {
-      req.setAttribute("funcionario", funcionario);
+      request.setAttribute("funcionario", funcionario);
     }
 
-    req.setAttribute("tipoFuncionario", tipoFuncionario);
+    request.setAttribute("tipoFuncionario", tipoFuncionario);
 
-    // Verificar qual página de edição deve ser carregada com base no tipo
     if ("VETERINARIO".equals(tipoFuncionario)) {
-      req.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(req, resp);
+      request.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(request, response);
     } else {
-      req.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(req, resp);
+      request.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(request, response);
     }
   }
 
-  private void editarFuncionario(HttpServletRequest req, HttpServletResponse resp)
+  private void editarFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String id = req.getParameter("id");
+    String id = request.getParameter("id");
     if (id == null || id.isEmpty()) {
-      resp.sendRedirect(req.getContextPath() + "/funcionario");
+      response.sendRedirect(request.getContextPath() + "/funcionario");
       return;
     }
 
@@ -143,29 +135,28 @@ public class FuncionarioServlet extends HttpServlet {
 
       if (optFuncionario.isPresent()) {
         Funcionario funcionario = optFuncionario.get();
-        req.setAttribute("funcionario", funcionario);
+        request.setAttribute("funcionario", funcionario);
 
-        // Encaminhar para a página de edição apropriada com base no cargo
         if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
-          req.setAttribute("tipoFuncionario", "VETERINARIO");
-          req.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(req, resp);
+          request.setAttribute("tipoFuncionario", "VETERINARIO");
+          request.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(request, response);
         } else {
-          req.setAttribute("tipoFuncionario", funcionario.getCargo().toString());
-          req.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(req, resp);
+          request.setAttribute("tipoFuncionario", funcionario.getCargo().toString());
+          request.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(request, response);
         }
       } else {
-        resp.sendRedirect(req.getContextPath() + "/funcionario");
+        response.sendRedirect(request.getContextPath() + "/funcionario");
       }
     } catch (IllegalArgumentException e) {
-      resp.sendRedirect(req.getContextPath() + "/funcionario");
+      response.sendRedirect(request.getContextPath() + "/funcionario");
     }
   }
 
-  private void detalhesFuncionario(HttpServletRequest req, HttpServletResponse resp)
+  private void detalhesFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String id = req.getParameter("id");
+    String id = request.getParameter("id");
     if (id == null || id.isEmpty()) {
-      resp.sendRedirect(req.getContextPath() + "/funcionario");
+      response.sendRedirect(request.getContextPath() + "/funcionario");
       return;
     }
 
@@ -175,32 +166,31 @@ public class FuncionarioServlet extends HttpServlet {
 
       if (optFuncionario.isPresent()) {
         Funcionario funcionario = optFuncionario.get();
-        req.setAttribute("funcionario", funcionario);
+        request.setAttribute("funcionario", funcionario);
 
-        // Encaminhar para a página de detalhes apropriada com base no cargo
         if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
-          req.getRequestDispatcher("/WEB-INF/views/veterinario/details.jsp").forward(req, resp);
+          request.getRequestDispatcher("/WEB-INF/views/veterinario/details.jsp").forward(request, response);
         } else {
-          req.getRequestDispatcher("/WEB-INF/views/funcionario/details.jsp").forward(req, resp);
+          request.getRequestDispatcher("/WEB-INF/views/funcionario/details.jsp").forward(request, response);
         }
       } else {
-        resp.sendRedirect(req.getContextPath() + "/funcionario");
+        response.sendRedirect(request.getContextPath() + "/funcionario");
       }
     } catch (IllegalArgumentException e) {
-      resp.sendRedirect(req.getContextPath() + "/funcionario");
+      response.sendRedirect(request.getContextPath() + "/funcionario");
     }
   }
 
-  private void salvarFuncionario(HttpServletRequest req, HttpServletResponse resp)
+  private void salvarFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String id = req.getParameter("id");
-    String nome = req.getParameter("nome");
-    String email = req.getParameter("email");
-    String password = req.getParameter("password");
-    String cargoStr = req.getParameter("cargo");
+    String id = request.getParameter("id");
+    String nome = request.getParameter("nome");
+    String email = request.getParameter("email");
+    String password = request.getParameter("password");
+    String cargoStr = request.getParameter("cargo");
 
     if (nome == null || nome.isEmpty() || email == null || email.isEmpty() || cargoStr == null || cargoStr.isEmpty()) {
-      req.setAttribute("erro", "Nome, email e cargo são obrigatórios.");
+      request.setAttribute("erro", "Nome, email e cargo são obrigatórios.");
 
       if (id != null && !id.isEmpty()) {
         Funcionario funcionario = new Funcionario();
@@ -210,29 +200,26 @@ public class FuncionarioServlet extends HttpServlet {
         try {
           funcionario.setCargo(Cargo.valueOf(cargoStr));
         } catch (IllegalArgumentException e) {
-          // Caso o cargo não seja um valor válido, use um valor padrão
           funcionario.setCargo(Cargo.VETERINARIO);
         }
-        exibirFormulario(req, resp, funcionario);
+        exibirFormulario(request, response, funcionario);
       } else {
-        exibirFormulario(req, resp, null);
+        exibirFormulario(request, response, null);
       }
       return;
     }
 
-    // Converter string para enum Cargo
     Cargo cargo;
     try {
       cargo = Cargo.valueOf(cargoStr);
     } catch (IllegalArgumentException e) {
-      req.setAttribute("erro", "Cargo inválido.");
-      exibirFormulario(req, resp, null);
+      request.setAttribute("erro", "Cargo inválido.");
+      exibirFormulario(request, response, null);
       return;
     }
 
     try {
       if (id != null && !id.isEmpty()) {
-        // Editar existente
         UUID uuid = UUID.fromString(id);
         Optional<Funcionario> optFuncionario = funcionarioRepository.findById(uuid);
 
@@ -242,43 +229,41 @@ public class FuncionarioServlet extends HttpServlet {
           funcionario.setEmail(email);
           funcionario.setCargo(cargo);
           if (password != null && !password.isEmpty()) {
-            funcionario.setPassword(password); // Idealmente, hash a senha
+            funcionario.setPassword(password);
           }
 
           funcionarioRepository.update(funcionario);
           String destino = cargo == Cargo.VETERINARIO ? "/funcionario/veterinario" : "/funcionario";
-          resp.sendRedirect(req.getContextPath() + destino + "?mensagem="
+          response.sendRedirect(request.getContextPath() + destino + "?mensagem="
               + URLEncoder.encode("Funcionário atualizado com sucesso!", "UTF-8"));
         } else {
-          resp.sendRedirect(req.getContextPath() + "/funcionario");
+          response.sendRedirect(request.getContextPath() + "/funcionario");
         }
       } else {
-        // Novo funcionário
         if (password == null || password.isEmpty()) {
-          req.setAttribute("erro", "Senha é obrigatória para novo funcionário.");
-          exibirFormulario(req, resp, null);
+          request.setAttribute("erro", "Senha é obrigatória para novo funcionário.");
+          exibirFormulario(request, response, null);
           return;
         }
 
-        // Verificar se email já existe
         if (funcionarioRepository.findByEmail(email).isPresent()) {
-          req.setAttribute("erro", "Email já cadastrado.");
+          request.setAttribute("erro", "Email já cadastrado.");
           Funcionario funcionario = new Funcionario();
           funcionario.setNome(nome);
           funcionario.setEmail(email);
           funcionario.setCargo(cargo);
-          exibirFormulario(req, resp, funcionario);
+          exibirFormulario(request, response, funcionario);
           return;
         }
 
         Funcionario funcionario = new Funcionario(nome, email, password, cargo);
         funcionarioRepository.save(funcionario);
         String destino = cargo == Cargo.VETERINARIO ? "/funcionario/veterinario" : "/funcionario";
-        resp.sendRedirect(req.getContextPath() + destino + "?mensagem="
+        response.sendRedirect(request.getContextPath() + destino + "?mensagem="
             + URLEncoder.encode("Funcionário cadastrado com sucesso!", "UTF-8"));
       }
     } catch (Exception e) {
-      req.setAttribute("erro", "Erro ao salvar funcionário: " + e.getMessage());
+      request.setAttribute("erro", "Erro ao salvar funcionário: " + e.getMessage());
 
       Funcionario funcionario = new Funcionario();
       if (id != null && !id.isEmpty()) {
@@ -288,21 +273,21 @@ public class FuncionarioServlet extends HttpServlet {
       funcionario.setEmail(email);
       funcionario.setCargo(cargo);
 
-      exibirFormulario(req, resp, funcionario);
+      exibirFormulario(request, response, funcionario);
     }
   }
 
-  private void excluirFuncionario(HttpServletRequest req, HttpServletResponse resp)
+  private void excluirFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String id = req.getParameter("id");
-    String origem = req.getParameter("origem");
+    String id = request.getParameter("id");
+    String origem = request.getParameter("origem");
 
     if (origem == null) {
       origem = "/funcionario/veterinario";
     }
 
     if (id == null || id.isEmpty()) {
-      resp.sendRedirect(req.getContextPath() + origem);
+      response.sendRedirect(request.getContextPath() + origem);
       return;
     }
 
@@ -317,16 +302,15 @@ public class FuncionarioServlet extends HttpServlet {
 
       funcionarioRepository.delete(uuid);
 
-      // Determinar para onde redirecionar com base na origem
       String destino = isVeterinario && "/funcionario/veterinario".equals(origem)
           ? "/funcionario/veterinario"
           : "/funcionario";
 
       String mensagem = URLEncoder.encode("Funcionário excluído com sucesso!", "UTF-8");
-      resp.sendRedirect(req.getContextPath() + destino + "?mensagem=" + mensagem);
+      response.sendRedirect(request.getContextPath() + destino + "?mensagem=" + mensagem);
     } catch (Exception e) {
       String erro = URLEncoder.encode("Erro ao excluir funcionário: " + e.getMessage(), "UTF-8");
-      resp.sendRedirect(req.getContextPath() + origem + "?erro=" + erro);
+      response.sendRedirect(request.getContextPath() + origem + "?erro=" + erro);
     }
   }
 }

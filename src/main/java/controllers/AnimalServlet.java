@@ -6,117 +6,222 @@ import jakarta.servlet.http.*;
 import models.Animal;
 import models.Animal.Classe;
 import models.Animal.Genero;
+import models.Animal.StatusSaude;
+import models.Habitat;
 import models.Habitat.TipoAmbiente;
 import repositories.AnimalRepository;
+import repositories.HabitatRepository;
+
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @WebServlet("/animal/*")
 public class AnimalServlet extends HttpServlet {
-  private AnimalRepository animalRepo = new AnimalRepository();
+  private final AnimalRepository animalRepository;
+  private final HabitatRepository habitatRepository;
+
+  public AnimalServlet() {
+    this.animalRepository = new AnimalRepository();
+    this.habitatRepository = new HabitatRepository();
+  }
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String path = req.getPathInfo();
-    if (path == null || "/".equals(path) || "/galeria".equals(path)) {
-      String especie = req.getParameter("especie");
-      String classe = req.getParameter("classe");
-      String genero = req.getParameter("genero");
-      String tipoAmbiente = req.getParameter("tipoAmbiente");
-      int page = 1;
-      int pageSize = 10;
-      try {
-        page = Integer.parseInt(req.getParameter("page"));
-      } catch (Exception ignored) {
+    String pathInfo = request.getPathInfo();
+
+    try {
+      if (pathInfo == null || "/".equals(pathInfo) || "/galeria".equals(pathInfo)) {
+        showAnimalList(request, response);
+        return;
       }
-      int offset = (page - 1) * pageSize;
 
-      List<Animal> animais = animalRepo.findFiltered(especie, classe, genero, tipoAmbiente, offset, pageSize);
-      long total = animalRepo.countFiltered(especie, classe, genero, tipoAmbiente);
-      int totalPages = (int) Math.ceil((double) total / pageSize);
-
-      req.setAttribute("animais", animais);
-      req.setAttribute("page", page);
-      req.setAttribute("totalPages", totalPages);
-      req.setAttribute("especie", especie);
-      req.setAttribute("classe", classe);
-      req.setAttribute("genero", genero);
-      req.setAttribute("tipoAmbiente", tipoAmbiente);
-
-      req.setAttribute("classes", Classe.values());
-      req.setAttribute("generos", Genero.values());
-      req.setAttribute("tiposAmbiente", TipoAmbiente.values());
-
-      req.getRequestDispatcher("/WEB-INF/views/animal/list.jsp").forward(req, resp);
-    } else if (path.startsWith("/detalhes")) {
-      String id = req.getParameter("id");
-      if (id != null) {
-        Animal animal = animalRepo.findById(java.util.UUID.fromString(id)).orElse(null);
-        req.setAttribute("animal", animal);
-        req.getRequestDispatcher("/WEB-INF/views/animal/details.jsp").forward(req, resp);
-      } else {
-        resp.sendRedirect(req.getContextPath() + "/animal/galeria");
+      if (pathInfo.startsWith("/detalhes")) {
+        showAnimalDetails(request, response);
+        return;
       }
-    } else if (path.startsWith("/novo")) {
-      // Carregue listas para selects
-      req.setAttribute("classes", Classe.values());
-      req.setAttribute("generos", Genero.values());
-      // Carregue habitats do banco
-      List<models.Habitat> habitats = new repositories.HabitatRepository().findAll();
-      req.setAttribute("habitats", habitats);
 
-      req.getRequestDispatcher("/WEB-INF/views/animal/form.jsp").forward(req, resp);
-    } else {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+      if (pathInfo.startsWith("/novo")) {
+        showNewAnimalForm(request, response);
+        return;
+      }
+
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+
+    } catch (IllegalArgumentException e) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parâmetro inválido: " + e.getMessage());
+    } catch (Exception e) {
+      response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro: " + e.getMessage());
     }
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String path = req.getPathInfo();
-    if (path != null && path.startsWith("/novo")) {
-      // Obtenha os parâmetros do formulário
-      String nome = req.getParameter("nome");
-      String especie = req.getParameter("especie");
-      String nomeCientifico = req.getParameter("nomeCientifico");
-      String classe = req.getParameter("classe");
-      String genero = req.getParameter("genero");
-      String habitatId = req.getParameter("habitatId");
-      String statusSaude = req.getParameter("statusSaude");
-      String dataChegada = req.getParameter("dataChegada");
-      String detalhesSaude = req.getParameter("detalhesSaude");
+    String pathInfo = request.getPathInfo();
 
-      // Crie o objeto Animal
-      Animal animal = new Animal();
-      animal.setNome(nome);
-      animal.setEspecie(especie);
-      animal.setNomeCientifico(nomeCientifico);
+    try {
+      if (pathInfo != null && pathInfo.startsWith("/novo")) {
+        processCreateAnimal(request, response);
+        return;
+      }
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+
+    } catch (IllegalArgumentException e) {
+      request.setAttribute("erro", "Erro de validação: " + e.getMessage());
+      showNewAnimalForm(request, response);
+    } catch (Exception e) {
+      request.setAttribute("erro", "Erro ao processar solicitação: " + e.getMessage());
+      showNewAnimalForm(request, response);
+    }
+  }
+
+  private void showAnimalList(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String especie = request.getParameter("especie");
+    String classe = request.getParameter("classe");
+    String genero = request.getParameter("genero");
+    String tipoAmbiente = request.getParameter("tipoAmbiente");
+
+    int page = getPageParameter(request);
+    int pageSize = 10;
+    int offset = (page - 1) * pageSize;
+
+    List<Animal> animais = animalRepository.findFiltered(especie, classe, genero, tipoAmbiente, offset, pageSize);
+    long total = animalRepository.countFiltered(especie, classe, genero, tipoAmbiente);
+    int totalPages = (int) Math.ceil((double) total / pageSize);
+
+    request.setAttribute("animais", animais);
+    request.setAttribute("page", page);
+    request.setAttribute("totalPages", totalPages);
+    request.setAttribute("especie", especie);
+    request.setAttribute("classe", classe);
+    request.setAttribute("genero", genero);
+    request.setAttribute("tipoAmbiente", tipoAmbiente);
+
+    request.setAttribute("classes", Classe.values());
+    request.setAttribute("generos", Genero.values());
+    request.setAttribute("tiposAmbiente", TipoAmbiente.values());
+
+    request.getRequestDispatcher("/WEB-INF/views/animal/list.jsp").forward(request, response);
+  }
+
+  private void showAnimalDetails(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String id = request.getParameter("id");
+
+    if (id == null || id.trim().isEmpty()) {
+      response.sendRedirect(request.getContextPath() + "/animal/galeria");
+      return;
+    }
+
+    UUID animalId = parseUUID(id);
+    Optional<Animal> optAnimal = animalRepository.findById(animalId);
+
+    if (optAnimal.isEmpty()) {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND, "Animal não encontrado");
+      return;
+    }
+
+    request.setAttribute("animal", optAnimal.get());
+    request.getRequestDispatcher("/WEB-INF/views/animal/details.jsp").forward(request, response);
+  }
+
+  private void showNewAnimalForm(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    request.setAttribute("classes", Classe.values());
+    request.setAttribute("generos", Genero.values());
+    request.setAttribute("statusSaude", StatusSaude.values());
+    request.setAttribute("habitats", habitatRepository.findAll());
+
+    request.getRequestDispatcher("/WEB-INF/views/animal/form.jsp").forward(request, response);
+  }
+
+  private void processCreateAnimal(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String nome = request.getParameter("nome");
+    String especie = request.getParameter("especie");
+    String nomeCientifico = request.getParameter("nomeCientifico");
+    String classe = request.getParameter("classe");
+    String genero = request.getParameter("genero");
+    String habitatId = request.getParameter("habitatId");
+    String statusSaude = request.getParameter("statusSaude");
+    String dataChegada = request.getParameter("dataChegada");
+    String detalhesSaude = request.getParameter("detalhesSaude");
+
+    validateRequiredFields(nome, especie);
+
+    Animal animal = new Animal();
+    animal.setNome(nome);
+    animal.setEspecie(especie);
+    animal.setNomeCientifico(nomeCientifico);
+
+    if (classe != null && !classe.isEmpty()) {
       animal.setClasse(Classe.valueOf(classe));
+    }
+
+    if (genero != null && !genero.isEmpty()) {
       animal.setGenero(Genero.valueOf(genero));
-      animal.setStatusSaude(Animal.StatusSaude.valueOf(statusSaude));
-      animal.setDetalhesSaude(detalhesSaude);
+    }
 
-      // Parse dataChegada
-      if (dataChegada != null && !dataChegada.isEmpty()) {
-        animal.setDataChegada(java.time.LocalDate.parse(dataChegada));
+    if (statusSaude != null && !statusSaude.isEmpty()) {
+      animal.setStatusSaude(StatusSaude.valueOf(statusSaude));
+    }
+
+    animal.setDetalhesSaude(detalhesSaude);
+
+    if (dataChegada != null && !dataChegada.isEmpty()) {
+      animal.setDataChegada(LocalDate.parse(dataChegada));
+    }
+
+    if (habitatId != null && !habitatId.isEmpty()) {
+      UUID id = parseUUID(habitatId);
+      Habitat habitat = habitatRepository.findById(id).orElse(null);
+      animal.setHabitat(habitat);
+    }
+
+    animalRepository.save(animal);
+
+    response.sendRedirect(request.getContextPath() + "/animal/galeria");
+  }
+
+  private int getPageParameter(HttpServletRequest request) {
+    int page = 1;
+    try {
+      String pageParam = request.getParameter("page");
+      if (pageParam != null && !pageParam.isEmpty()) {
+        page = Integer.parseInt(pageParam);
+        if (page < 1) {
+          page = 1;
+        }
       }
+    } catch (NumberFormatException ignored) {
 
-      // Buscar habitat
-      if (habitatId != null && !habitatId.isEmpty()) {
-        models.Habitat habitat = new repositories.HabitatRepository()
-            .findById(java.util.UUID.fromString(habitatId)).orElse(null);
-        animal.setHabitat(habitat);
-      }
+    }
 
-      // Salvar no banco
-      animalRepo.save(animal);
+    return page;
+  }
 
-      // Redirecionar para a lista
-      resp.sendRedirect(req.getContextPath() + "/animal/galeria");
-    } else {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+  private UUID parseUUID(String uuidStr) {
+    if (uuidStr == null || uuidStr.trim().isEmpty()) {
+      throw new IllegalArgumentException("UUID não pode ser nulo ou vazio");
+    }
+    try {
+      return UUID.fromString(uuidStr);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Formato de UUID inválido: " + uuidStr);
+    }
+  }
+
+  private void validateRequiredFields(String nome, String especie) throws IllegalArgumentException {
+    if (nome == null || nome.trim().isEmpty()) {
+      throw new IllegalArgumentException("Nome do animal é obrigatório");
+    }
+    if (especie == null || especie.trim().isEmpty()) {
+      throw new IllegalArgumentException("Espécie do animal é obrigatória");
     }
   }
 }

@@ -1,26 +1,55 @@
 package controllers;
 
-import dtos.auth.LoginRequest;
-import dtos.auth.LoginResponse;
-import dtos.auth.RegisterRequest;
-import dtos.auth.RegisterResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import repositories.AuthRepository;
+import models.Customer;
+import models.Funcionario;
+import repositories.CustomerRepository;
+import repositories.FuncionarioRepository;
+import utils.PasswordUtils;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @WebServlet("/auth/*")
 public class AuthServlet extends HttpServlet {
 
-    private final AuthRepository authRepository;
+    private final CustomerRepository customerRepository;
+    private final FuncionarioRepository funcionarioRepository;
 
     public AuthServlet() {
-        this.authRepository = new AuthRepository();
+        this.customerRepository = new CustomerRepository();
+        this.funcionarioRepository = new FuncionarioRepository();
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String pathInfo = request.getPathInfo();
+
+        if (pathInfo == null || pathInfo.equals("/")) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+
+        switch (pathInfo) {
+            case "/login":
+                showLoginForm(request, response);
+                break;
+            case "/register":
+                showRegisterForm(request, response);
+                break;
+            case "/logout":
+                handleLogout(request, response);
+                break;
+            default:
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                break;
+        }
     }
 
     @Override
@@ -29,7 +58,7 @@ public class AuthServlet extends HttpServlet {
         String pathInfo = request.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Endpoint inválido");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -44,9 +73,19 @@ public class AuthServlet extends HttpServlet {
                 handleLogout(request, response);
                 break;
             default:
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Endpoint não encontrado");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 break;
         }
+    }
+
+    private void showLoginForm(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
+    }
+
+    private void showRegisterForm(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
     }
 
     private void handleLogin(HttpServletRequest request, HttpServletResponse response)
@@ -54,29 +93,34 @@ public class AuthServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        LoginRequest loginRequest = new LoginRequest(email, password);
-        LoginResponse loginResponse = authRepository.login(loginRequest);
-
-        if (loginResponse.isAuthenticated()) {
-            HttpSession session = request.getSession();
-            session.setAttribute("user", loginResponse);
-
-            String redirectUrl;
-            String role = loginResponse.getRole();
-
-            if ("VISITANTE".equals(role)) {
-                redirectUrl = "/dashboard/visitor";
-            } else if ("ADMINISTRADOR".equals(role)) {
-                redirectUrl = "/dashboard/admin";
-            } else {
-                redirectUrl = "/dashboard/funcionario";
-            }
-
-            response.sendRedirect(request.getContextPath() + redirectUrl);
-        } else {
-            request.setAttribute("errorMessage", loginResponse.getMessage());
-            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
+        if (isNullOrEmpty(email) || isNullOrEmpty(password)) {
+            request.setAttribute("errorMessage", "Email e senha são obrigatórios");
+            showLoginForm(request, response);
+            return;
         }
+
+        Optional<Funcionario> funcionarioOpt = funcionarioRepository.findByEmail(email);
+        if (funcionarioOpt.isPresent()) {
+            Funcionario funcionario = funcionarioOpt.get();
+            if (PasswordUtils.verifyPassword(password, funcionario.getPassword())) {
+                createFuncionarioSession(request, funcionario);
+                redirectToDashboard(request, response, funcionario.getCargo().toString());
+                return;
+            }
+        }
+
+        Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+        if (customerOpt.isPresent()) {
+            Customer customer = customerOpt.get();
+            if (PasswordUtils.verifyPassword(password, customer.getPassword())) {
+                createCustomerSession(request, customer);
+                redirectToDashboard(request, response, "VISITANTE");
+                return;
+            }
+        }
+
+        request.setAttribute("errorMessage", "Email ou senha inválidos");
+        showLoginForm(request, response);
     }
 
     private void handleRegister(HttpServletRequest request, HttpServletResponse response)
@@ -88,22 +132,44 @@ public class AuthServlet extends HttpServlet {
         boolean isFuncionario = "true".equals(request.getParameter("isFuncionario"));
         String cargoStr = request.getParameter("cargo");
 
-        if (!password.equals(confirmPassword)) {
-            request.setAttribute("errorMessage", "As senhas não coincidem");
-            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+        if (isNullOrEmpty(nome) || isNullOrEmpty(email) || isNullOrEmpty(password)) {
+            request.setAttribute("errorMessage", "Nome, email e senha são obrigatórios");
+            showRegisterForm(request, response);
             return;
         }
 
-        RegisterRequest registerRequest = new RegisterRequest(nome, email, password, isFuncionario, cargoStr);
-        RegisterResponse registerResponse = authRepository.register(registerRequest);
-
-        if (registerResponse.success()) {
-            request.setAttribute("successMessage", registerResponse.message());
-            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
-        } else {
-            request.setAttribute("errorMessage", registerResponse.message());
-            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+        if (!password.equals(confirmPassword)) {
+            request.setAttribute("errorMessage", "As senhas não coincidem");
+            showRegisterForm(request, response);
+            return;
         }
+
+        if (customerRepository.findByEmail(email).isPresent() ||
+                funcionarioRepository.findByEmail(email).isPresent()) {
+            request.setAttribute("errorMessage", "Email já está em uso");
+            showRegisterForm(request, response);
+            return;
+        }
+
+        String hashedPassword = PasswordUtils.hashPassword(password);
+
+        if (isFuncionario) {
+            try {
+                Funcionario.Cargo cargo = Funcionario.Cargo.valueOf(cargoStr);
+                Funcionario funcionario = new Funcionario(nome, email, hashedPassword, cargo);
+                funcionarioRepository.save(funcionario);
+            } catch (IllegalArgumentException e) {
+                request.setAttribute("errorMessage", "Cargo inválido selecionado");
+                showRegisterForm(request, response);
+                return;
+            }
+        } else {
+            Customer customer = new Customer(nome, email, hashedPassword);
+            customerRepository.save(customer);
+        }
+
+        request.setAttribute("successMessage", "Cadastro realizado com sucesso");
+        showLoginForm(request, response);
     }
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response)
@@ -115,19 +181,40 @@ public class AuthServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/");
     }
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String pathInfo = request.getPathInfo();
+    private void createFuncionarioSession(HttpServletRequest request, Funcionario funcionario) {
+        HttpSession session = request.getSession();
+        session.setAttribute("user", funcionario);
+        session.setAttribute("role", funcionario.getCargo().toString());
+        session.setAttribute("userId", funcionario.getId());
+        session.setAttribute("userName", funcionario.getNome());
+        session.setAttribute("userEmail", funcionario.getEmail());
+    }
 
-        if ("/login".equals(pathInfo)) {
-            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
-        } else if ("/register".equals(pathInfo)) {
-            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
-        } else if ("/logout".equals(pathInfo)) {
-            handleLogout(request, response);
+    private void createCustomerSession(HttpServletRequest request, Customer customer) {
+        HttpSession session = request.getSession();
+        session.setAttribute("user", customer);
+        session.setAttribute("role", "VISITANTE");
+        session.setAttribute("userId", customer.getId());
+        session.setAttribute("userName", customer.getNome());
+        session.setAttribute("userEmail", customer.getEmail());
+    }
+
+    private void redirectToDashboard(HttpServletRequest request, HttpServletResponse response, String role)
+            throws IOException {
+        String redirectUrl;
+
+        if ("VISITANTE".equals(role)) {
+            redirectUrl = "/dashboard/visitor";
+        } else if ("ADMINISTRADOR".equals(role)) {
+            redirectUrl = "/dashboard/admin";
         } else {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            redirectUrl = "/dashboard/funcionario";
         }
+
+        response.sendRedirect(request.getContextPath() + redirectUrl);
+    }
+
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }

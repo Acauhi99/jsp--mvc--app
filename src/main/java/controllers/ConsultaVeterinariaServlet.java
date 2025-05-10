@@ -5,6 +5,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Animal;
 import models.ConsultaVeterinaria;
+import models.ConsultaVeterinaria.StatusConsulta;
+import models.ConsultaVeterinaria.TipoConsulta;
 import models.Funcionario;
 import models.Funcionario.Cargo;
 import repositories.AnimalRepository;
@@ -15,246 +17,393 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@WebServlet({ "/consulta", "/consulta/nova", "/consulta/salvar", "/consulta/detalhes", "/consulta/editar",
-    "/consulta/historico" })
+@WebServlet("/consulta/*")
 public class ConsultaVeterinariaServlet extends HttpServlet {
 
-  private final ConsultaVeterinariaRepository consultaRepo = new ConsultaVeterinariaRepository();
-  private final AnimalRepository animalRepo = new AnimalRepository();
-  private final FuncionarioRepository funcionarioRepo = new FuncionarioRepository();
+  private final ConsultaVeterinariaRepository consultaRepository;
+  private final AnimalRepository animalRepository;
+  private final FuncionarioRepository funcionarioRepository;
+
+  public ConsultaVeterinariaServlet() {
+    this.consultaRepository = new ConsultaVeterinariaRepository();
+    this.animalRepository = new AnimalRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
+  }
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String path = req.getServletPath();
-    switch (path) {
-      case "/consulta":
-        listarConsultas(req, resp);
-        break;
-      case "/consulta/nova":
-        mostrarFormulario(req, resp, null);
-        break;
-      case "/consulta/editar":
-        editarConsulta(req, resp);
-        break;
-      case "/consulta/detalhes":
-        detalhesConsulta(req, resp);
-        break;
-      case "/consulta/historico":
-        mostrarHistorico(req, resp);
-        break;
-      default:
-        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String pathInfo = request.getPathInfo();
+
+    try {
+      if (pathInfo == null || pathInfo.equals("/")) {
+        listarConsultas(request, response);
+        return;
+      }
+
+      if (pathInfo.equals("/nova")) {
+        mostrarFormulario(request, response, null);
+        return;
+      }
+
+      if (pathInfo.equals("/editar")) {
+        editarConsulta(request, response);
+        return;
+      }
+
+      if (pathInfo.equals("/detalhes")) {
+        detalhesConsulta(request, response);
+        return;
+      }
+
+      if (pathInfo.equals("/historico")) {
+        mostrarHistorico(request, response);
+        return;
+      }
+
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    } catch (Exception e) {
+      response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro: " + e.getMessage());
     }
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String path = req.getServletPath();
-    if ("/consulta/salvar".equals(path)) {
-      salvarConsulta(req, resp);
-    } else {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String pathInfo = request.getPathInfo();
+
+    try {
+      if (pathInfo != null && pathInfo.equals("/salvar")) {
+        salvarConsulta(request, response);
+        return;
+      }
+
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    } catch (Exception e) {
+      request.setAttribute("error", "Erro ao processar solicitação: " + e.getMessage());
+      doGet(request, response);
     }
   }
 
-  private void listarConsultas(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String statusParam = req.getParameter("status");
-    String animalParam = req.getParameter("animal");
-    String tipoParam = req.getParameter("tipo");
-    String veterinarioParam = req.getParameter("veterinario");
-    String pageParam = req.getParameter("page");
+  private void listarConsultas(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    carregarDadosParaFiltros(request);
 
-    List<Animal> animais = animalRepo.findAll();
-    req.setAttribute("animais", animais);
+    String statusParam = request.getParameter("status");
+    String animalParam = request.getParameter("animal");
+    String tipoParam = request.getParameter("tipo");
+    String veterinarioParam = request.getParameter("veterinario");
 
-    List<Funcionario> veterinarios = funcionarioRepo.findByCargo(Cargo.VETERINARIO);
-    req.setAttribute("veterinarios", veterinarios);
+    List<ConsultaVeterinaria> consultas = obterConsultasFiltradas(
+        statusParam, animalParam, tipoParam, veterinarioParam);
 
-    List<ConsultaVeterinaria> consultas = consultaRepo.findAll();
+    int page = getPageParameter(request);
+    int pageSize = 10;
+    PageResult<ConsultaVeterinaria> pageResult = paginarResultados(consultas, page, pageSize);
+
+    request.setAttribute("consultas", pageResult.items);
+    request.setAttribute("page", pageResult.currentPage);
+    request.setAttribute("totalPages", pageResult.totalPages);
+
+    request.getRequestDispatcher("/WEB-INF/views/consulta/list.jsp").forward(request, response);
+  }
+
+  private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response,
+      ConsultaVeterinaria consulta)
+      throws ServletException, IOException {
+    carregarDadosParaFormulario(request);
+
+    if (consulta != null) {
+      request.setAttribute("consulta", consulta);
+    }
+
+    request.getRequestDispatcher("/WEB-INF/views/consulta/form.jsp").forward(request, response);
+  }
+
+  private void editarConsulta(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String id = request.getParameter("id");
+    if (id == null || id.isEmpty()) {
+      response.sendRedirect(request.getContextPath() + "/consulta");
+      return;
+    }
+
+    try {
+      UUID consultaId = UUID.fromString(id);
+      Optional<ConsultaVeterinaria> consultaOpt = consultaRepository.findById(consultaId);
+
+      if (consultaOpt.isEmpty()) {
+        response.sendRedirect(request.getContextPath() + "/consulta");
+        return;
+      }
+
+      carregarDadosParaFormulario(request);
+      request.setAttribute("consulta", consultaOpt.get());
+      request.getRequestDispatcher("/WEB-INF/views/consulta/edit.jsp").forward(request, response);
+
+    } catch (IllegalArgumentException e) {
+      response.sendRedirect(request.getContextPath() + "/consulta");
+    }
+  }
+
+  private void detalhesConsulta(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String id = request.getParameter("id");
+    if (id == null || id.isEmpty()) {
+      response.sendRedirect(request.getContextPath() + "/consulta");
+      return;
+    }
+
+    try {
+      UUID consultaId = UUID.fromString(id);
+      Optional<ConsultaVeterinaria> consultaOpt = consultaRepository.findById(consultaId);
+
+      if (consultaOpt.isEmpty()) {
+        response.sendRedirect(request.getContextPath() + "/consulta");
+        return;
+      }
+
+      request.setAttribute("consulta", consultaOpt.get());
+      request.getRequestDispatcher("/WEB-INF/views/consulta/details.jsp").forward(request, response);
+
+    } catch (IllegalArgumentException e) {
+      response.sendRedirect(request.getContextPath() + "/consulta");
+    }
+  }
+
+  private void mostrarHistorico(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    List<Animal> animais = animalRepository.findAll();
+    request.setAttribute("animais", animais);
+
+    String animalId = request.getParameter("animal");
+    if (animalId != null && !animalId.isEmpty()) {
+      try {
+        UUID id = UUID.fromString(animalId);
+        Optional<Animal> animalOpt = animalRepository.findById(id);
+
+        if (animalOpt.isPresent()) {
+          Animal animal = animalOpt.get();
+          List<ConsultaVeterinaria> historicoConsultas = consultaRepository.findByAnimalId(animal.getId());
+
+          request.setAttribute("animal", animal);
+          request.setAttribute("historicoConsultas", historicoConsultas);
+        }
+      } catch (IllegalArgumentException e) {
+      }
+    }
+
+    request.getRequestDispatcher("/WEB-INF/views/consulta/historico.jsp").forward(request, response);
+  }
+
+  private void salvarConsulta(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    try {
+      String id = request.getParameter("id");
+
+      UUID animalId = UUID.fromString(request.getParameter("animal"));
+      Animal animal = animalRepository.findById(animalId)
+          .orElseThrow(() -> new Exception("Animal não encontrado"));
+
+      TipoConsulta tipo = TipoConsulta.valueOf(request.getParameter("tipoConsulta"));
+      StatusConsulta status = StatusConsulta.valueOf(request.getParameter("status"));
+
+      LocalDateTime dataHora = obterDataHora(request.getParameter("dataHora"));
+
+      Funcionario veterinario = obterVeterinario(request);
+
+      String diagnostico = request.getParameter("diagnostico");
+      String tratamento = request.getParameter("tratamento");
+      String medicamentos = request.getParameter("medicamentos");
+      String observacoes = request.getParameter("observacoes");
+
+      boolean acompanhamentoNecessario = request.getParameter("acompanhamentoNecessario") != null;
+      LocalDateTime dataRetorno = null;
+      if (acompanhamentoNecessario) {
+        dataRetorno = obterDataHora(request.getParameter("dataRetorno"));
+      }
+
+      ConsultaVeterinaria consulta = criarOuAtualizarConsulta(id, animal, tipo, status, dataHora,
+          veterinario, diagnostico, tratamento, medicamentos, observacoes,
+          acompanhamentoNecessario, dataRetorno);
+
+      if (id != null && !id.isEmpty()) {
+        consultaRepository.update(consulta);
+      } else {
+        consultaRepository.save(consulta);
+      }
+
+      response.sendRedirect(request.getContextPath() + "/consulta");
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      request.setAttribute("error", "Erro ao salvar consulta: " + e.getMessage());
+
+      String id = request.getParameter("id");
+      if (id != null && !id.isEmpty()) {
+        editarConsulta(request, response);
+      } else {
+        mostrarFormulario(request, response, null);
+      }
+    }
+  }
+
+  private void carregarDadosParaFiltros(HttpServletRequest request) {
+    List<Animal> animais = animalRepository.findAll();
+    List<Funcionario> veterinarios = funcionarioRepository.findByCargo(Cargo.VETERINARIO);
+
+    request.setAttribute("animais", animais);
+    request.setAttribute("veterinarios", veterinarios);
+    request.setAttribute("tiposConsulta", TipoConsulta.values());
+    request.setAttribute("statusConsulta", StatusConsulta.values());
+  }
+
+  private void carregarDadosParaFormulario(HttpServletRequest request) {
+    List<Animal> animais = animalRepository.findAll();
+    List<Funcionario> veterinarios = funcionarioRepository.findByCargo(Cargo.VETERINARIO);
+
+    request.setAttribute("animais", animais);
+    request.setAttribute("veterinarios", veterinarios);
+    request.setAttribute("tiposConsulta", TipoConsulta.values());
+    request.setAttribute("statusConsulta", StatusConsulta.values());
+  }
+
+  private List<ConsultaVeterinaria> obterConsultasFiltradas(
+      String statusParam, String animalParam, String tipoParam, String veterinarioParam) {
+
+    List<ConsultaVeterinaria> consultas = consultaRepository.findAll();
 
     if (statusParam != null && !statusParam.isEmpty()) {
       consultas.removeIf(c -> !c.getStatus().name().equals(statusParam));
     }
+
     if (animalParam != null && !animalParam.isEmpty()) {
       consultas.removeIf(c -> !c.getAnimal().getId().toString().equals(animalParam));
     }
+
     if (tipoParam != null && !tipoParam.isEmpty()) {
       consultas.removeIf(c -> !c.getTipoConsulta().name().equals(tipoParam));
     }
+
     if (veterinarioParam != null && !veterinarioParam.isEmpty()) {
-      consultas
-          .removeIf(c -> c.getVeterinario() == null || !c.getVeterinario().getId().toString().equals(veterinarioParam));
+      consultas.removeIf(c -> c.getVeterinario() == null ||
+          !c.getVeterinario().getId().toString().equals(veterinarioParam));
     }
 
-    int pageSize = 10;
-    int page = 1;
-    if (pageParam != null) {
-      try {
-        page = Integer.parseInt(pageParam);
-        if (page < 1)
-          page = 1;
-      } catch (NumberFormatException ignored) {
-      }
+    return consultas;
+  }
+
+  private static class PageResult<T> {
+    final List<T> items;
+    final int currentPage;
+    final int totalPages;
+
+    PageResult(List<T> items, int currentPage, int totalPages) {
+      this.items = items;
+      this.currentPage = currentPage;
+      this.totalPages = totalPages;
     }
-    int totalItems = consultas.size();
+  }
+
+  private <T> PageResult<T> paginarResultados(List<T> items, int page, int pageSize) {
+    int totalItems = items.size();
     int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
     int fromIndex = (page - 1) * pageSize;
     int toIndex = Math.min(fromIndex + pageSize, totalItems);
-    List<ConsultaVeterinaria> pageList = totalItems > 0
-        ? consultas.subList(Math.min(fromIndex, totalItems), Math.min(toIndex, totalItems))
+
+    List<T> pageItems = totalItems > 0
+        ? items.subList(Math.min(fromIndex, totalItems), Math.min(toIndex, totalItems))
         : new ArrayList<>();
 
-    req.setAttribute("consultas", pageList);
-    req.setAttribute("page", page);
-    req.setAttribute("totalPages", totalPages);
-
-    req.getRequestDispatcher("/WEB-INF/views/consulta/list.jsp").forward(req, resp);
+    return new PageResult<>(pageItems, page, totalPages);
   }
 
-  private void mostrarFormulario(HttpServletRequest req, HttpServletResponse resp, ConsultaVeterinaria consulta)
-      throws ServletException, IOException {
-    List<Animal> animais = animalRepo.findAll();
-    List<Funcionario> veterinarios = funcionarioRepo.findByCargo(Cargo.VETERINARIO);
-    req.setAttribute("animais", animais);
-    req.setAttribute("veterinarios", veterinarios);
-    if (consulta != null) {
-      req.setAttribute("consulta", consulta);
-    }
-    req.getRequestDispatcher("/WEB-INF/views/consulta/form.jsp").forward(req, resp);
-  }
-
-  private void editarConsulta(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String id = req.getParameter("id");
-    if (id == null) {
-      resp.sendRedirect(req.getContextPath() + "/consulta");
-      return;
-    }
-    Optional<ConsultaVeterinaria> consultaOpt = consultaRepo.findById(UUID.fromString(id));
-    if (consultaOpt.isPresent()) {
-      List<Animal> animais = animalRepo.findAll();
-      List<Funcionario> veterinarios = funcionarioRepo.findByCargo(Cargo.VETERINARIO);
-
-      req.setAttribute("animais", animais);
-      req.setAttribute("veterinarios", veterinarios);
-      req.setAttribute("consulta", consultaOpt.get());
-      req.getRequestDispatcher("/WEB-INF/views/consulta/edit.jsp").forward(req, resp);
-    } else {
-      resp.sendRedirect(req.getContextPath() + "/consulta");
-    }
-  }
-
-  private void detalhesConsulta(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    String id = req.getParameter("id");
-    if (id == null) {
-      resp.sendRedirect(req.getContextPath() + "/consulta");
-      return;
-    }
-    Optional<ConsultaVeterinaria> consultaOpt = consultaRepo.findById(UUID.fromString(id));
-    if (consultaOpt.isPresent()) {
-      req.setAttribute("consulta", consultaOpt.get());
-      req.getRequestDispatcher("/WEB-INF/views/consulta/details.jsp").forward(req, resp);
-    } else {
-      resp.sendRedirect(req.getContextPath() + "/consulta");
-    }
-  }
-
-  private void mostrarHistorico(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    List<Animal> animais = animalRepo.findAll();
-    req.setAttribute("animais", animais);
-
-    String animalId = req.getParameter("animal");
-    if (animalId != null && !animalId.isEmpty()) {
-      Optional<Animal> animalOpt = animalRepo.findById(UUID.fromString(animalId));
-      if (animalOpt.isPresent()) {
-        Animal animal = animalOpt.get();
-        List<ConsultaVeterinaria> historicoConsultas = consultaRepo.findByAnimalId(animal.getId());
-
-        req.setAttribute("animal", animal);
-        req.setAttribute("historicoConsultas", historicoConsultas);
-      }
-    }
-
-    req.getRequestDispatcher("/WEB-INF/views/consulta/historico.jsp").forward(req, resp);
-  }
-
-  private void salvarConsulta(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  private int getPageParameter(HttpServletRequest request) {
+    int page = 1;
     try {
-      String id = req.getParameter("id");
-      UUID animalId = UUID.fromString(req.getParameter("animal"));
-      Animal animal = animalRepo.findById(animalId).orElse(null);
-      ConsultaVeterinaria.TipoConsulta tipo = ConsultaVeterinaria.TipoConsulta
-          .valueOf(req.getParameter("tipoConsulta"));
-      ConsultaVeterinaria.StatusConsulta status = ConsultaVeterinaria.StatusConsulta
-          .valueOf(req.getParameter("status"));
-
-      LocalDateTime dataHora = null;
-      if (req.getParameter("dataHora") != null && !req.getParameter("dataHora").isEmpty()) {
-        dataHora = LocalDateTime.parse(req.getParameter("dataHora"));
+      String pageParam = request.getParameter("page");
+      if (pageParam != null && !pageParam.isEmpty()) {
+        page = Integer.parseInt(pageParam);
+        if (page < 1) {
+          page = 1;
+        }
       }
+    } catch (NumberFormatException ignored) {
+    }
+    return page;
+  }
 
-      String veterinarioId = req.getParameter("veterinario");
-      Funcionario veterinario = null;
-      if (veterinarioId != null && !veterinarioId.isEmpty()) {
-        veterinario = funcionarioRepo.findById(UUID.fromString(veterinarioId)).orElse(null);
-      } else {
-        Object userObj = req.getSession().getAttribute("user");
-        if (userObj instanceof dtos.auth.LoginResponse) {
-          dtos.auth.LoginResponse loginResponse = (dtos.auth.LoginResponse) userObj;
-          UUID userId = loginResponse.getUserDetails().getId();
-          Funcionario currentUser = funcionarioRepo.findById(userId).orElse(null);
-          if (currentUser != null && currentUser.getCargo() == Cargo.VETERINARIO) {
-            veterinario = currentUser;
-          }
+  private LocalDateTime obterDataHora(String dataHoraStr) {
+    if (dataHoraStr != null && !dataHoraStr.isEmpty()) {
+      return LocalDateTime.parse(dataHoraStr);
+    }
+    return null;
+  }
+
+  private Funcionario obterVeterinario(HttpServletRequest request) throws Exception {
+    String veterinarioId = request.getParameter("veterinario");
+
+    if (veterinarioId != null && !veterinarioId.isEmpty()) {
+      return funcionarioRepository.findById(UUID.fromString(veterinarioId))
+          .orElse(null);
+    }
+
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+      Object userIdObj = session.getAttribute("userId");
+
+      if (userIdObj instanceof UUID) {
+        UUID userId = (UUID) userIdObj;
+        Funcionario currentUser = funcionarioRepository.findById(userId).orElse(null);
+
+        if (currentUser != null && currentUser.getCargo() == Cargo.VETERINARIO) {
+          return currentUser;
         }
       }
 
-      String diagnostico = req.getParameter("diagnostico");
-      String tratamento = req.getParameter("tratamento");
-      String medicamentos = req.getParameter("medicamentos");
-      String observacoes = req.getParameter("observacoes");
+      else {
+        Object userObj = session.getAttribute("user");
+        if (userObj instanceof Funcionario) {
+          Funcionario currentUser = (Funcionario) userObj;
 
-      boolean acompanhamentoNecessario = req.getParameter("acompanhamentoNecessario") != null;
-
-      LocalDateTime dataRetorno = null;
-      if (acompanhamentoNecessario && req.getParameter("dataRetorno") != null
-          && !req.getParameter("dataRetorno").isEmpty()) {
-        dataRetorno = LocalDateTime.parse(req.getParameter("dataRetorno"));
-      }
-
-      ConsultaVeterinaria consulta;
-      if (id != null && !id.isEmpty()) {
-        consulta = consultaRepo.findById(UUID.fromString(id)).orElse(new ConsultaVeterinaria());
-      } else {
-        consulta = new ConsultaVeterinaria();
-      }
-
-      consulta.setAnimal(animal);
-      consulta.setTipoConsulta(tipo);
-      consulta.setStatus(status);
-      consulta.setDataHora(dataHora);
-      consulta.setVeterinario(veterinario);
-      consulta.setDiagnostico(diagnostico);
-      consulta.setTratamento(tratamento);
-      consulta.setMedicamentos(medicamentos);
-      consulta.setObservacoes(observacoes);
-      consulta.setAcompanhamentoNecessario(acompanhamentoNecessario);
-      consulta.setDataRetorno(dataRetorno);
-
-      if (id != null && !id.isEmpty()) {
-        consultaRepo.update(consulta);
-      } else {
-        consultaRepo.save(consulta);
-      }
-      resp.sendRedirect(req.getContextPath() + "/consulta");
-    } catch (Exception e) {
-      e.printStackTrace();
-      req.setAttribute("error", "Erro ao salvar consulta: " + e.getMessage());
-      String id = req.getParameter("id");
-      if (id != null && !id.isEmpty()) {
-        editarConsulta(req, resp);
-      } else {
-        mostrarFormulario(req, resp, null);
+          if (currentUser.getCargo() == Cargo.VETERINARIO) {
+            return currentUser;
+          }
+        }
       }
     }
+
+    return null;
+  }
+
+  private ConsultaVeterinaria criarOuAtualizarConsulta(
+      String id, Animal animal, TipoConsulta tipo, StatusConsulta status,
+      LocalDateTime dataHora, Funcionario veterinario, String diagnostico,
+      String tratamento, String medicamentos, String observacoes,
+      boolean acompanhamentoNecessario, LocalDateTime dataRetorno) throws Exception {
+
+    ConsultaVeterinaria consulta;
+
+    if (id != null && !id.isEmpty()) {
+      consulta = consultaRepository.findById(UUID.fromString(id))
+          .orElse(new ConsultaVeterinaria());
+    } else {
+      consulta = new ConsultaVeterinaria();
+    }
+
+    consulta.setAnimal(animal);
+    consulta.setTipoConsulta(tipo);
+    consulta.setStatus(status);
+    consulta.setDataHora(dataHora);
+    consulta.setVeterinario(veterinario);
+    consulta.setDiagnostico(diagnostico);
+    consulta.setTratamento(tratamento);
+    consulta.setMedicamentos(medicamentos);
+    consulta.setObservacoes(observacoes);
+    consulta.setAcompanhamentoNecessario(acompanhamentoNecessario);
+    consulta.setDataRetorno(dataRetorno);
+
+    return consulta;
   }
 }

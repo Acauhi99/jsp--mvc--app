@@ -12,7 +12,6 @@
             <p>Que bom ter você conosco! Explore as atrações do Zoo Park e aproveite sua visita.</p>
         </div>
         
-        <!-- Atividades -->
         <div class="dashboard-section">
             <h2 class="section-subtitle">Atividades</h2>
             <div class="dashboard-quick-actions">
@@ -35,7 +34,6 @@
             </div>
         </div>
         
-        <!-- Exploração -->
         <div class="dashboard-section">
             <h2 class="section-subtitle">Mapa e Informações</h2>
             <div class="dashboard-quick-actions">
@@ -49,8 +47,7 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Dica do dia -->
+    
         <div class="dashboard-info" style="margin:2rem auto; max-width:800px; text-align:center; background:#e3f4eb; padding:1.2rem; border-radius:8px;">
             <p style="margin-bottom:0.5rem;"><strong>Dica do dia:</strong></p>
             <p>Você sabia que o Zoo Park participa de projetos de conservação de espécies ameaçadas? Informe-se e ajude a preservar a natureza!</p>

@@ -57,7 +57,5 @@
             </c:otherwise>
         </c:choose>
     </div>
-
-    <!-- Incluindo o componente do modal de confirmação -->
     <jsp:include page="/WEB-INF/components/confirmation-modal.jsp" />
 </t:master>

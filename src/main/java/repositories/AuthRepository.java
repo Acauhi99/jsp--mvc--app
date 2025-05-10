@@ -1,15 +1,13 @@
 package repositories;
 
-import dtos.auth.LoginRequest;
-import dtos.auth.LoginResponse;
-import dtos.auth.RegisterRequest;
-import dtos.auth.RegisterResponse;
-import dtos.auth.UserDetails;
 import models.Customer;
 import models.Funcionario;
 import utils.PasswordUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public class AuthRepository {
 
@@ -21,106 +19,123 @@ public class AuthRepository {
         this.funcionarioRepository = new FuncionarioRepository();
     }
 
-    public LoginResponse login(LoginRequest request) {
-        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(request.email());
-        
+    public Map<String, Object> login(String email, String password) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("authenticated", false);
+
+        if (email == null || password == null) {
+            result.put("message", "Email e senha são obrigatórios");
+            return result;
+        }
+
+        Optional<Funcionario> optionalFuncionario = funcionarioRepository.findByEmail(email);
+
         if (optionalFuncionario.isPresent()) {
             Funcionario funcionario = optionalFuncionario.get();
-            
-            if (!PasswordUtils.verifyPassword(request.password(), funcionario.getPassword())) {
-                return LoginResponse.failure("Senha inválida");
+
+            if (!PasswordUtils.verifyPassword(password, funcionario.getPassword())) {
+                result.put("message", "Senha inválida");
+                return result;
             }
-            
-            UserDetails userDetails = UserDetails.fromFuncionario(funcionario);
-            return LoginResponse.success(userDetails, "Login realizado com sucesso");
+
+            result.put("authenticated", true);
+            result.put("user", funcionario);
+            result.put("userId", funcionario.getId());
+            result.put("nome", funcionario.getNome());
+            result.put("email", funcionario.getEmail());
+            result.put("role", funcionario.getCargo().toString());
+            result.put("message", "Login realizado com sucesso");
+
+            return result;
         }
-        
-        Optional<Customer> optionalCustomer = customerRepository.findByEmail(request.email());
-        
+
+        Optional<Customer> optionalCustomer = customerRepository.findByEmail(email);
+
         if (optionalCustomer.isPresent()) {
             Customer customer = optionalCustomer.get();
-            
-            if (!PasswordUtils.verifyPassword(request.password(), customer.getPassword())) {
-                return LoginResponse.failure("Senha inválida");
+
+            if (!PasswordUtils.verifyPassword(password, customer.getPassword())) {
+                result.put("message", "Senha inválida");
+                return result;
             }
-            
-            UserDetails userDetails = UserDetails.fromCustomer(customer);
-            return LoginResponse.success(userDetails, "Login realizado com sucesso");
+
+            result.put("authenticated", true);
+            result.put("user", customer);
+            result.put("userId", customer.getId());
+            result.put("nome", customer.getNome());
+            result.put("email", customer.getEmail());
+            result.put("role", "VISITANTE");
+            result.put("message", "Login realizado com sucesso");
+
+            return result;
         }
-        
-        return LoginResponse.failure("Usuário não encontrado com este email");
+
+        result.put("message", "Usuário não encontrado com este email");
+        return result;
     }
 
-    public RegisterResponse register(RegisterRequest request) {
-        if (request.isFuncionario()) {
-            return registerFuncionario(request);
-        } else {
-            return registerCustomer(request);
-        }
-    }
+    public Map<String, Object> registerCustomer(String nome, String email, String password) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", false);
 
-    private RegisterResponse registerCustomer(RegisterRequest request) {
-        if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
-            return RegisterResponse.of(
-                null, null, null, null, false,
-                "Email já está em uso"
-            );
+        if (customerRepository.findByEmail(email).isPresent()) {
+            result.put("message", "Email já está em uso");
+            return result;
         }
 
-        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
+        String hashedPassword = PasswordUtils.hashPassword(password);
 
-        Customer customer = Customer.create(
-            request.getNome(),
-            request.getEmail(),
-            hashedPassword
-        );
-
+        Customer customer = Customer.create(nome, email, hashedPassword);
         Customer savedCustomer = customerRepository.save(customer);
 
-        return RegisterResponse.of(
-            savedCustomer.getId(),
-            savedCustomer.getNome(),
-            savedCustomer.getEmail(),
-            "VISITANTE",
-            true,
-            "Cliente registrado com sucesso"
-        );
+        result.put("success", true);
+        result.put("user", savedCustomer);
+        result.put("userId", savedCustomer.getId());
+        result.put("nome", savedCustomer.getNome());
+        result.put("email", savedCustomer.getEmail());
+        result.put("role", "VISITANTE");
+        result.put("message", "Cliente registrado com sucesso");
+
+        return result;
     }
 
-    private RegisterResponse registerFuncionario(RegisterRequest request) {
-        if (funcionarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            return RegisterResponse.of(
-                null, null, null, null, false,
-                "Email já está em uso"
-            );
+    public Map<String, Object> registerFuncionario(String nome, String email, String password, String cargoStr) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", false);
+
+        if (funcionarioRepository.findByEmail(email).isPresent()) {
+            result.put("message", "Email já está em uso");
+            return result;
         }
 
-        String hashedPassword = PasswordUtils.hashPassword(request.getPassword());
-        Funcionario.Cargo cargo = request.getCargo();
-        
-        if (cargo == null) {
-            return RegisterResponse.of(
-                null, null, null, null, false,
-                "Cargo inválido selecionado"
-            );
+        Funcionario.Cargo cargo;
+        try {
+            cargo = Funcionario.Cargo.valueOf(cargoStr);
+        } catch (IllegalArgumentException e) {
+            result.put("message", "Cargo inválido selecionado");
+            return result;
         }
 
-        Funcionario funcionario = Funcionario.create(
-            request.getNome(),
-            request.getEmail(),
-            hashedPassword,
-            cargo
-        );
-
+        String hashedPassword = PasswordUtils.hashPassword(password);
+        Funcionario funcionario = Funcionario.create(nome, email, hashedPassword, cargo);
         Funcionario savedFuncionario = funcionarioRepository.save(funcionario);
 
-        return RegisterResponse.of(
-            savedFuncionario.getId(),
-            savedFuncionario.getNome(),
-            savedFuncionario.getEmail(),
-            savedFuncionario.getCargo().toString(),
-            true,
-            "Funcionário registrado com sucesso"
-        );
+        result.put("success", true);
+        result.put("user", savedFuncionario);
+        result.put("userId", savedFuncionario.getId());
+        result.put("nome", savedFuncionario.getNome());
+        result.put("email", savedFuncionario.getEmail());
+        result.put("role", savedFuncionario.getCargo().toString());
+        result.put("message", "Funcionário registrado com sucesso");
+
+        return result;
+    }
+
+    public Customer getCustomerById(UUID id) {
+        return customerRepository.findById(id).orElse(null);
+    }
+
+    public Funcionario getFuncionarioById(UUID id) {
+        return funcionarioRepository.findById(id).orElse(null);
     }
 }

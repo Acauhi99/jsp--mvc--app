@@ -2,6 +2,9 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="t" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<% pageContext.setAttribute("formatter", java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")); %>
+
 <t:master title="Meus Ingressos">
     <div class="container">
         <h1 class="section-title">Meus Ingressos</h1>
@@ -74,7 +77,9 @@
                                     <fmt:formatNumber value="${ingresso.valor}" type="currency" currencySymbol="R$ " minFractionDigits="2"/>
                                 </td>
                                 <td>
-                                    <fmt:formatDate value="${ingresso.dataCompra}" pattern="dd/MM/yyyy HH:mm"/>
+                                    <c:if test="${not empty ingresso.dataCompra}">
+                                        ${ingresso.dataCompra.format(formatter)}
+                                    </c:if>
                                 </td>
                                 <td>
                                     <c:choose>
