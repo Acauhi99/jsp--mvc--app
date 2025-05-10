@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @WebServlet({ "/manutencao", "/manutencao/novo", "/manutencao/salvar", "/manutencao/detalhes", "/manutencao/editar" })
 public class ManutencaoHabitatServlet extends HttpServlet {
@@ -60,60 +59,61 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
   private void listarSolicitacoes(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
+    // Parse parameters
+    StatusManutencao status = null;
+    PrioridadeManutencao prioridade = null;
+    UUID habitatId = null;
+    UUID responsavelId = null;
+
     String statusParam = req.getParameter("status");
+    if (statusParam != null && !statusParam.isEmpty()) {
+      try {
+        status = StatusManutencao.valueOf(statusParam);
+      } catch (IllegalArgumentException e) {
+
+      }
+    }
+
     String prioridadeParam = req.getParameter("prioridade");
+    if (prioridadeParam != null && !prioridadeParam.isEmpty()) {
+      try {
+        prioridade = PrioridadeManutencao.valueOf(prioridadeParam);
+      } catch (IllegalArgumentException e) {
+
+      }
+    }
+
     String habitatParam = req.getParameter("habitat");
+    if (habitatParam != null && !habitatParam.isEmpty()) {
+      try {
+        habitatId = UUID.fromString(habitatParam);
+      } catch (IllegalArgumentException e) {
+
+      }
+    }
+
     String responsavelParam = req.getParameter("responsavel");
+    if (responsavelParam != null && !responsavelParam.isEmpty()) {
+      try {
+        responsavelId = UUID.fromString(responsavelParam);
+      } catch (IllegalArgumentException e) {
 
-    carregarDadosSelecao(req);
-    List<ManutencaoHabitat> manutencoes = manutencaoRepo.findAll();
+      }
+    }
 
-    manutencoes = filtrarManutencoes(manutencoes, statusParam, prioridadeParam, habitatParam, responsavelParam);
+    List<ManutencaoHabitat> manutencoes = manutencaoRepo.findWithFilters(status, prioridade, habitatId, responsavelId);
+
     List<ManutencaoHabitat> pageList = aplicarPaginacao(req, resp, manutencoes);
 
-    for (ManutencaoHabitat m : manutencoes) {
+    for (ManutencaoHabitat m : pageList) {
       if (m.getDataSolicitacao() != null) {
         req.setAttribute("dataSolicitacao_" + m.getId(), Timestamp.valueOf(m.getDataSolicitacao()));
       }
     }
 
+    carregarDadosSelecao(req);
     req.setAttribute("manutencoes", pageList);
     req.getRequestDispatcher("/WEB-INF/views/manutencao/list.jsp").forward(req, resp);
-  }
-
-  private List<ManutencaoHabitat> filtrarManutencoes(List<ManutencaoHabitat> manutencoes,
-      String statusParam,
-      String prioridadeParam,
-      String habitatParam,
-      String responsavelParam) {
-    List<ManutencaoHabitat> resultado = new ArrayList<>(manutencoes);
-
-    if (statusParam != null && !statusParam.isEmpty()) {
-      resultado = resultado.stream()
-          .filter(m -> m.getStatus().name().equals(statusParam))
-          .collect(Collectors.toList());
-    }
-
-    if (prioridadeParam != null && !prioridadeParam.isEmpty()) {
-      resultado = resultado.stream()
-          .filter(m -> m.getPrioridade().name().equals(prioridadeParam))
-          .collect(Collectors.toList());
-    }
-
-    if (habitatParam != null && !habitatParam.isEmpty()) {
-      resultado = resultado.stream()
-          .filter(m -> m.getHabitat().getId().toString().equals(habitatParam))
-          .collect(Collectors.toList());
-    }
-
-    if (responsavelParam != null && !responsavelParam.isEmpty()) {
-      resultado = resultado.stream()
-          .filter(m -> m.getResponsavel() != null &&
-              m.getResponsavel().getId().toString().equals(responsavelParam))
-          .collect(Collectors.toList());
-    }
-
-    return resultado;
   }
 
   private List<ManutencaoHabitat> aplicarPaginacao(HttpServletRequest req, HttpServletResponse resp,
