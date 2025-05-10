@@ -2,6 +2,9 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="t" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<% pageContext.setAttribute("formatter", java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")); %>
+
 <t:master title="Detalhes do Ingresso">
     <div class="container">
         <a href="${pageContext.request.contextPath}${isAdmin ? '/ingresso/admin' : '/ingresso'}" class="back-link">&larr; Voltar para lista de ingressos</a>
@@ -59,7 +62,9 @@
                 <div class="detail-item">
                     <span class="detail-label">Data de Compra</span>
                     <span class="detail-value">
-                        <fmt:formatDate value="${ingresso.dataCompra}" pattern="dd/MM/yyyy HH:mm:ss"/>
+                        <c:if test="${not empty ingresso.dataCompra}">
+                            ${ingresso.dataCompra.format(formatter)}
+                        </c:if>
                     </span>
                 </div>
                 

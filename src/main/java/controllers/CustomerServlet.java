@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
-import jakarta.persistence.EntityManager;
 
 @WebServlet(urlPatterns = { "/customer", "/customer/novo", "/customer/editar", "/customer/detalhes",
     "/customer/excluir" })
@@ -85,17 +84,7 @@ public class CustomerServlet extends HttpServlet {
 
   private void listarVisitantes(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    EntityManager em = customerRepository.getEntityManager();
-    List<Customer> visitantes;
-
-    try {
-      visitantes = em
-          .createQuery("SELECT DISTINCT c FROM Customer c LEFT JOIN FETCH c.ingressosAdquiridos", Customer.class)
-          .getResultList();
-    } finally {
-      em.close();
-    }
-
+    List<Customer> visitantes = customerRepository.findAllWithIngressos();
     request.setAttribute("visitantes", visitantes);
     request.getRequestDispatcher("/WEB-INF/views/visitante/list.jsp").forward(request, response);
   }
@@ -141,7 +130,8 @@ public class CustomerServlet extends HttpServlet {
 
     try {
       UUID uuid = UUID.fromString(id);
-      Optional<Customer> optVisitante = customerRepository.findById(uuid);
+
+      Optional<Customer> optVisitante = customerRepository.findByIdWithIngressos(uuid);
 
       if (optVisitante.isPresent()) {
         request.setAttribute("visitante", optVisitante.get());

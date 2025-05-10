@@ -2,6 +2,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="t" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<% pageContext.setAttribute("formatter", java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")); %>
 <t:master title="Detalhes do Visitante">
     <div class="container">
         <a href="${pageContext.request.contextPath}/customer" class="back-link">&larr; Voltar para lista de visitantes</a>
@@ -9,14 +11,6 @@
         <div class="details-container">
             <div class="details-header">
                 <h1 class="details-title">${visitante.nome}</h1>
-                <div class="details-actions">
-                    <a href="${pageContext.request.contextPath}/customer/editar?id=${visitante.id}" class="btn btn-primary">Editar</a>
-                    <form action="${pageContext.request.contextPath}/customer/excluir" method="post" style="display:inline;" 
-                          onsubmit="return confirm('Tem certeza que deseja excluir este visitante? Esta ação não pode ser desfeita.');">
-                        <input type="hidden" name="id" value="${visitante.id}">
-                        <button type="submit" class="btn btn-delete">Excluir</button>
-                    </form>
-                </div>
             </div>
             
             <div class="details-section">
@@ -69,7 +63,9 @@
                                     <tr>
                                         <td>${ingresso.tipo}</td>
                                         <td>
-                                            <fmt:formatDate value="${ingresso.dataCompra}" pattern="dd/MM/yyyy HH:mm"/>
+                                            <c:if test="${not empty ingresso.dataCompra}">
+                                                ${ingresso.dataCompra.format(formatter)}
+                                            </c:if>
                                         </td>
                                         <td>R$ ${ingresso.valor}</td>
                                         <td>
