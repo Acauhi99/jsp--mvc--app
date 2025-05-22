@@ -6,16 +6,18 @@ import jakarta.servlet.http.*;
 import models.Habitat;
 import models.Habitat.TipoAmbiente;
 import repositories.HabitatRepository;
+import handlers.HabitatHandler;
 
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(urlPatterns = { "/habitat", "/habitat/novo" })
+@WebServlet(urlPatterns = { "/habitat", "/habitat/novo", "/habitat/editar", "/habitat/excluir" })
 public class HabitatServlet extends BaseServlet {
-  private final HabitatRepository habitatRepo;
+  private final HabitatHandler habitatHandler;
 
   public HabitatServlet() {
-    this.habitatRepo = new HabitatRepository();
+    HabitatRepository habitatRepo = new HabitatRepository();
+    this.habitatHandler = new HabitatHandler(habitatRepo);
   }
 
   @Override
@@ -33,6 +35,15 @@ public class HabitatServlet extends BaseServlet {
       return;
     }
 
+    if ("/habitat/editar".equals(path)) {
+      if (!requireAnyRole(request, response, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
+        return;
+      }
+
+      editarHabitat(request, response);
+      return;
+    }
+
     if (!requireAuthentication(request, response)) {
       return;
     }
@@ -45,29 +56,21 @@ public class HabitatServlet extends BaseServlet {
       throws ServletException, IOException {
     String path = request.getServletPath();
 
-    if ("/habitat/novo".equals(path)) {
-      if (!requireAnyRole(request, response, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
-        return;
-      }
+    if (!requireAnyRole(request, response, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
 
-      cadastrarHabitat(request, response);
+    if ("/habitat/novo".equals(path) || "/habitat/editar".equals(path)) {
+      salvarHabitat(request, response);
+    } else if ("/habitat/excluir".equals(path)) {
+      excluirHabitat(request, response);
     }
   }
 
   private void listarHabitats(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String tipoAmbiente = request.getParameter("tipoAmbiente");
-    List<Habitat> habitats;
-
-    if (tipoAmbiente != null && !tipoAmbiente.isEmpty()) {
-      try {
-        habitats = habitatRepo.findByTipoAmbiente(TipoAmbiente.valueOf(tipoAmbiente));
-      } catch (IllegalArgumentException e) {
-        habitats = habitatRepo.findAll();
-      }
-    } else {
-      habitats = habitatRepo.findAll();
-    }
+    List<Habitat> habitats = habitatHandler.listarHabitatsPorTipoAmbiente(tipoAmbiente);
 
     request.setAttribute("habitats", habitats);
     request.setAttribute("tiposAmbiente", TipoAmbiente.values());
@@ -75,43 +78,101 @@ public class HabitatServlet extends BaseServlet {
     forwardToView(request, response, "/WEB-INF/views/habitat/list.jsp");
   }
 
-  private void cadastrarHabitat(HttpServletRequest request, HttpServletResponse response)
+  private void editarHabitat(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    String id = request.getParameter("id");
+
+    try {
+      habitatHandler.buscarHabitatPorId(id).ifPresentOrElse(
+          habitat -> {
+            request.setAttribute("habitat", habitat);
+            request.setAttribute("tiposAmbiente", TipoAmbiente.values());
+            try {
+              forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          },
+          () -> {
+            try {
+              response.sendRedirect(request.getContextPath() + "/habitat?erro=Habitat não encontrado");
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          });
+    } catch (Exception e) {
+      response.sendRedirect(request.getContextPath() + "/habitat?erro=" + e.getMessage());
+    }
+  }
+
+  private void salvarHabitat(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String id = request.getParameter("id");
     String nome = request.getParameter("nome");
     String tipoAmbienteStr = request.getParameter("tipoAmbiente");
     String tamanhoStr = request.getParameter("tamanho");
     String capacidadeStr = request.getParameter("capacidadeMaximaAnimais");
     String publicoAcessivelStr = request.getParameter("publicoAcessivel");
 
-    if (nome == null || nome.isEmpty() || tipoAmbienteStr == null || tipoAmbienteStr.isEmpty()) {
-      request.setAttribute("erro", "Nome e tipo de ambiente são obrigatórios");
-      request.setAttribute("tiposAmbiente", TipoAmbiente.values());
-      forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
-      return;
-    }
-
     try {
+      if (id != null && !id.isEmpty()) {
+        habitatHandler.atualizarHabitat(id, nome, tipoAmbienteStr, tamanhoStr, capacidadeStr, publicoAcessivelStr);
+        response.sendRedirect(request.getContextPath() + "/habitat?mensagem=Habitat atualizado com sucesso!");
+      } else {
+        habitatHandler.criarHabitat(nome, tipoAmbienteStr, tamanhoStr, capacidadeStr, publicoAcessivelStr);
+        response.sendRedirect(request.getContextPath() + "/habitat?mensagem=Habitat cadastrado com sucesso!");
+      }
+    } catch (Exception e) {
+      request.setAttribute("erro", e.getMessage());
+      request.setAttribute("tiposAmbiente", TipoAmbiente.values());
+
       Habitat habitat = new Habitat();
       habitat.setNome(nome);
-      habitat.setTipoAmbiente(TipoAmbiente.valueOf(tipoAmbienteStr));
+      try {
+        if (tipoAmbienteStr != null && !tipoAmbienteStr.isEmpty()) {
+          habitat.setTipoAmbiente(TipoAmbiente.valueOf(tipoAmbienteStr));
+        }
+      } catch (IllegalArgumentException ignored) {
+      }
 
       if (tamanhoStr != null && !tamanhoStr.isEmpty()) {
-        habitat.setTamanho(Double.parseDouble(tamanhoStr));
+        try {
+          habitat.setTamanho(Double.parseDouble(tamanhoStr));
+        } catch (NumberFormatException ignored) {
+        }
       }
 
       if (capacidadeStr != null && !capacidadeStr.isEmpty()) {
-        habitat.setCapacidadeMaximaAnimais(Integer.parseInt(capacidadeStr));
+        try {
+          habitat.setCapacidadeMaximaAnimais(Integer.parseInt(capacidadeStr));
+        } catch (NumberFormatException ignored) {
+        }
       }
 
       habitat.setPublicoAcessivel("on".equals(publicoAcessivelStr));
 
-      habitatRepo.save(habitat);
+      if (id != null && !id.isEmpty()) {
+        try {
+          request.setAttribute("habitatId", id);
+        } catch (IllegalArgumentException ignored) {
+        }
+      }
 
-      response.sendRedirect(request.getContextPath() + "/habitat?mensagem=Habitat cadastrado com sucesso!");
-    } catch (Exception e) {
-      request.setAttribute("erro", "Erro ao cadastrar habitat: " + e.getMessage());
-      request.setAttribute("tiposAmbiente", TipoAmbiente.values());
+      request.setAttribute("habitat", habitat);
       forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
+    }
+  }
+
+  private void excluirHabitat(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String id = request.getParameter("id");
+
+    try {
+      habitatHandler.excluirHabitat(id);
+      response.sendRedirect(request.getContextPath() + "/habitat?mensagem=Habitat excluído com sucesso!");
+    } catch (Exception e) {
+      response.sendRedirect(request.getContextPath() +
+          "/habitat?erro=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
     }
   }
 }

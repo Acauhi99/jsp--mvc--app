@@ -6,6 +6,7 @@ import jakarta.servlet.http.*;
 import models.Funcionario;
 import models.Funcionario.Cargo;
 import repositories.FuncionarioRepository;
+import handlers.FuncionarioHandler;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,10 +18,11 @@ import java.util.Optional;
     "/funcionario/detalhes", "/funcionario/excluir" })
 public class FuncionarioServlet extends BaseServlet {
 
-  private final FuncionarioRepository funcionarioRepository;
+  private final FuncionarioHandler funcionarioHandler;
 
   public FuncionarioServlet() {
-    this.funcionarioRepository = new FuncionarioRepository();
+    FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
+    this.funcionarioHandler = new FuncionarioHandler(funcionarioRepository);
   }
 
   @Override
@@ -72,14 +74,14 @@ public class FuncionarioServlet extends BaseServlet {
 
   private void listarFuncionarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    List<Funcionario> funcionarios = funcionarioRepository.findAll();
+    List<Funcionario> funcionarios = funcionarioHandler.listarTodosFuncionarios();
     request.setAttribute("funcionarios", funcionarios);
     forwardToView(request, response, "/WEB-INF/views/funcionario/list.jsp");
   }
 
   private void listarVeterinarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    List<Funcionario> veterinarios = funcionarioRepository.findByCargo(Cargo.VETERINARIO);
+    List<Funcionario> veterinarios = funcionarioHandler.listarPorCargo(Cargo.VETERINARIO);
     request.setAttribute("veterinarios", veterinarios);
     forwardToView(request, response, "/WEB-INF/views/veterinario/list.jsp");
   }
@@ -107,30 +109,20 @@ public class FuncionarioServlet extends BaseServlet {
   private void editarFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String id = request.getParameter("id");
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/funcionario");
-      return;
-    }
+    Optional<Funcionario> optFuncionario = funcionarioHandler.buscarPorId(id);
 
-    try {
-      UUID uuid = UUID.fromString(id);
-      Optional<Funcionario> optFuncionario = funcionarioRepository.findById(uuid);
+    if (optFuncionario.isPresent()) {
+      Funcionario funcionario = optFuncionario.get();
+      request.setAttribute("funcionario", funcionario);
 
-      if (optFuncionario.isPresent()) {
-        Funcionario funcionario = optFuncionario.get();
-        request.setAttribute("funcionario", funcionario);
-
-        if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
-          request.setAttribute("tipoFuncionario", "VETERINARIO");
-          forwardToView(request, response, "/WEB-INF/views/veterinario/edit.jsp");
-        } else {
-          request.setAttribute("tipoFuncionario", funcionario.getCargo().toString());
-          forwardToView(request, response, "/WEB-INF/views/funcionario/edit.jsp");
-        }
+      if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
+        request.setAttribute("tipoFuncionario", "VETERINARIO");
+        forwardToView(request, response, "/WEB-INF/views/veterinario/edit.jsp");
       } else {
-        response.sendRedirect(request.getContextPath() + "/funcionario");
+        request.setAttribute("tipoFuncionario", funcionario.getCargo().toString());
+        forwardToView(request, response, "/WEB-INF/views/funcionario/edit.jsp");
       }
-    } catch (IllegalArgumentException e) {
+    } else {
       response.sendRedirect(request.getContextPath() + "/funcionario");
     }
   }
@@ -138,28 +130,18 @@ public class FuncionarioServlet extends BaseServlet {
   private void detalhesFuncionario(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String id = request.getParameter("id");
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/funcionario");
-      return;
-    }
+    Optional<Funcionario> optFuncionario = funcionarioHandler.buscarPorId(id);
 
-    try {
-      UUID uuid = UUID.fromString(id);
-      Optional<Funcionario> optFuncionario = funcionarioRepository.findById(uuid);
+    if (optFuncionario.isPresent()) {
+      Funcionario funcionario = optFuncionario.get();
+      request.setAttribute("funcionario", funcionario);
 
-      if (optFuncionario.isPresent()) {
-        Funcionario funcionario = optFuncionario.get();
-        request.setAttribute("funcionario", funcionario);
-
-        if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
-          forwardToView(request, response, "/WEB-INF/views/veterinario/details.jsp");
-        } else {
-          forwardToView(request, response, "/WEB-INF/views/funcionario/details.jsp");
-        }
+      if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
+        forwardToView(request, response, "/WEB-INF/views/veterinario/details.jsp");
       } else {
-        response.sendRedirect(request.getContextPath() + "/funcionario");
+        forwardToView(request, response, "/WEB-INF/views/funcionario/details.jsp");
       }
-    } catch (IllegalArgumentException e) {
+    } else {
       response.sendRedirect(request.getContextPath() + "/funcionario");
     }
   }
@@ -172,89 +154,42 @@ public class FuncionarioServlet extends BaseServlet {
     String password = request.getParameter("password");
     String cargoStr = request.getParameter("cargo");
 
-    if (nome == null || nome.isEmpty() || email == null || email.isEmpty() || cargoStr == null || cargoStr.isEmpty()) {
-      request.setAttribute("erro", "Nome, email e cargo são obrigatórios.");
+    try {
+      Funcionario funcionario;
 
       if (id != null && !id.isEmpty()) {
-        Funcionario funcionario = new Funcionario();
-        funcionario.setId(UUID.fromString(id));
-        funcionario.setNome(nome);
-        funcionario.setEmail(email);
-        try {
-          funcionario.setCargo(Cargo.valueOf(cargoStr));
-        } catch (IllegalArgumentException e) {
-          funcionario.setCargo(Cargo.VETERINARIO);
-        }
-        exibirFormulario(request, response, funcionario);
+        funcionario = funcionarioHandler.atualizarFuncionario(id, nome, email, password, cargoStr);
       } else {
-        exibirFormulario(request, response, null);
+        funcionario = funcionarioHandler.criarFuncionario(nome, email, password, cargoStr);
       }
-      return;
-    }
 
-    Cargo cargo;
-    try {
-      cargo = Cargo.valueOf(cargoStr);
-    } catch (IllegalArgumentException e) {
-      request.setAttribute("erro", "Cargo inválido.");
-      exibirFormulario(request, response, null);
-      return;
-    }
+      String destino = funcionario.getCargo() == Cargo.VETERINARIO ? "/funcionario/veterinario" : "/funcionario";
+      String acao = (id != null && !id.isEmpty()) ? "atualizado" : "cadastrado";
+      String mensagem = URLEncoder.encode("Funcionário " + acao + " com sucesso!", "UTF-8");
 
-    try {
-      if (id != null && !id.isEmpty()) {
-        UUID uuid = UUID.fromString(id);
-        Optional<Funcionario> optFuncionario = funcionarioRepository.findById(uuid);
-
-        if (optFuncionario.isPresent()) {
-          Funcionario funcionario = optFuncionario.get();
-          funcionario.setNome(nome);
-          funcionario.setEmail(email);
-          funcionario.setCargo(cargo);
-          if (password != null && !password.isEmpty()) {
-            funcionario.setPassword(password);
-          }
-
-          funcionarioRepository.update(funcionario);
-          String destino = cargo == Cargo.VETERINARIO ? "/funcionario/veterinario" : "/funcionario";
-          response.sendRedirect(request.getContextPath() + destino + "?mensagem="
-              + URLEncoder.encode("Funcionário atualizado com sucesso!", "UTF-8"));
-        } else {
-          response.sendRedirect(request.getContextPath() + "/funcionario");
-        }
-      } else {
-        if (password == null || password.isEmpty()) {
-          request.setAttribute("erro", "Senha é obrigatória para novo funcionário.");
-          exibirFormulario(request, response, null);
-          return;
-        }
-
-        if (funcionarioRepository.findByEmail(email).isPresent()) {
-          request.setAttribute("erro", "Email já cadastrado.");
-          Funcionario funcionario = new Funcionario();
-          funcionario.setNome(nome);
-          funcionario.setEmail(email);
-          funcionario.setCargo(cargo);
-          exibirFormulario(request, response, funcionario);
-          return;
-        }
-
-        Funcionario funcionario = new Funcionario(nome, email, password, cargo);
-        funcionarioRepository.save(funcionario);
-        String destino = cargo == Cargo.VETERINARIO ? "/funcionario/veterinario" : "/funcionario";
-        response.sendRedirect(request.getContextPath() + destino + "?mensagem="
-            + URLEncoder.encode("Funcionário cadastrado com sucesso!", "UTF-8"));
-      }
+      response.sendRedirect(request.getContextPath() + destino + "?mensagem=" + mensagem);
     } catch (Exception e) {
-      request.setAttribute("erro", "Erro ao salvar funcionário: " + e.getMessage());
+      request.setAttribute("erro", e.getMessage());
 
       Funcionario funcionario = new Funcionario();
       if (id != null && !id.isEmpty()) {
-        funcionario.setId(UUID.fromString(id));
+        try {
+          funcionario.setId(UUID.fromString(id));
+        } catch (IllegalArgumentException ignored) {
+        }
       }
-      funcionario.setNome(nome);
-      funcionario.setEmail(email);
-      funcionario.setCargo(cargo);
+      funcionario.setNome(nome != null ? nome : "");
+      funcionario.setEmail(email != null ? email : "");
+
+      try {
+        if (cargoStr != null && !cargoStr.isEmpty()) {
+          funcionario.setCargo(Cargo.valueOf(cargoStr));
+        } else {
+          funcionario.setCargo(Cargo.VETERINARIO);
+        }
+      } catch (IllegalArgumentException ignored) {
+        funcionario.setCargo(Cargo.VETERINARIO);
+      }
 
       exibirFormulario(request, response, funcionario);
     }
@@ -269,21 +204,15 @@ public class FuncionarioServlet extends BaseServlet {
       origem = "/funcionario/veterinario";
     }
 
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + origem);
-      return;
+    Optional<Funcionario> optFunc = funcionarioHandler.buscarPorId(id);
+    boolean isVeterinario = false;
+
+    if (optFunc.isPresent()) {
+      isVeterinario = Cargo.VETERINARIO.equals(optFunc.get().getCargo());
     }
 
     try {
-      UUID uuid = UUID.fromString(id);
-      Optional<Funcionario> optFunc = funcionarioRepository.findById(uuid);
-      boolean isVeterinario = false;
-
-      if (optFunc.isPresent()) {
-        isVeterinario = Cargo.VETERINARIO.equals(optFunc.get().getCargo());
-      }
-
-      funcionarioRepository.delete(uuid);
+      funcionarioHandler.excluirFuncionario(id);
 
       String destino = isVeterinario && "/funcionario/veterinario".equals(origem)
           ? "/funcionario/veterinario"

@@ -5,20 +5,22 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Customer;
 import repositories.CustomerRepository;
+import handlers.CustomerHandler;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @WebServlet(urlPatterns = { "/customer", "/customer/novo", "/customer/editar", "/customer/detalhes",
     "/customer/excluir" })
 public class CustomerServlet extends BaseServlet {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerHandler customerHandler;
 
   public CustomerServlet() {
-    this.customerRepository = new CustomerRepository();
+    CustomerRepository customerRepository = new CustomerRepository();
+    this.customerHandler = new CustomerHandler(customerRepository);
   }
 
   @Override
@@ -67,7 +69,7 @@ public class CustomerServlet extends BaseServlet {
 
   private void listarVisitantes(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    List<Customer> visitantes = customerRepository.findAllWithIngressos();
+    List<Customer> visitantes = customerHandler.listarTodosVisitantes();
     request.setAttribute("visitantes", visitantes);
     forwardToView(request, response, "/WEB-INF/views/visitante/list.jsp");
   }
@@ -83,22 +85,13 @@ public class CustomerServlet extends BaseServlet {
   private void editarVisitante(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String id = request.getParameter("id");
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/customer");
-      return;
-    }
 
-    try {
-      UUID uuid = UUID.fromString(id);
-      Optional<Customer> optVisitante = customerRepository.findById(uuid);
+    Optional<Customer> optVisitante = customerHandler.buscarVisitantePorId(id);
 
-      if (optVisitante.isPresent()) {
-        request.setAttribute("visitante", optVisitante.get());
-        forwardToView(request, response, "/WEB-INF/views/visitante/edit.jsp");
-      } else {
-        response.sendRedirect(request.getContextPath() + "/customer");
-      }
-    } catch (IllegalArgumentException e) {
+    if (optVisitante.isPresent()) {
+      request.setAttribute("visitante", optVisitante.get());
+      forwardToView(request, response, "/WEB-INF/views/visitante/edit.jsp");
+    } else {
       response.sendRedirect(request.getContextPath() + "/customer");
     }
   }
@@ -106,23 +99,13 @@ public class CustomerServlet extends BaseServlet {
   private void detalhesVisitante(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String id = request.getParameter("id");
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/customer");
-      return;
-    }
 
-    try {
-      UUID uuid = UUID.fromString(id);
+    Optional<Customer> optVisitante = customerHandler.buscarVisitantePorIdComIngressos(id);
 
-      Optional<Customer> optVisitante = customerRepository.findByIdWithIngressos(uuid);
-
-      if (optVisitante.isPresent()) {
-        request.setAttribute("visitante", optVisitante.get());
-        forwardToView(request, response, "/WEB-INF/views/visitante/details.jsp");
-      } else {
-        response.sendRedirect(request.getContextPath() + "/customer");
-      }
-    } catch (IllegalArgumentException e) {
+    if (optVisitante.isPresent()) {
+      request.setAttribute("visitante", optVisitante.get());
+      forwardToView(request, response, "/WEB-INF/views/visitante/details.jsp");
+    } else {
       response.sendRedirect(request.getContextPath() + "/customer");
     }
   }
@@ -134,67 +117,26 @@ public class CustomerServlet extends BaseServlet {
     String email = request.getParameter("email");
     String password = request.getParameter("password");
 
-    if (nome == null || nome.isEmpty() || email == null || email.isEmpty()) {
-      request.setAttribute("erro", "Nome e email são obrigatórios.");
-      if (id != null && !id.isEmpty()) {
-        Customer visitante = new Customer();
-        visitante.setId(UUID.fromString(id));
-        visitante.setNome(nome);
-        visitante.setEmail(email);
-        exibirFormulario(request, response, visitante);
-      } else {
-        exibirFormulario(request, response, null);
-      }
-      return;
-    }
-
     try {
       if (id != null && !id.isEmpty()) {
-        UUID uuid = UUID.fromString(id);
-        Optional<Customer> optVisitante = customerRepository.findById(uuid);
-
-        if (optVisitante.isPresent()) {
-          Customer visitante = optVisitante.get();
-          visitante.setNome(nome);
-          visitante.setEmail(email);
-          if (password != null && !password.isEmpty()) {
-            visitante.setPassword(password);
-          }
-
-          customerRepository.update(visitante);
-          response.sendRedirect(request.getContextPath() + "/customer?mensagem=Visitante atualizado com sucesso!");
-        } else {
-          response.sendRedirect(request.getContextPath() + "/customer");
-        }
+        customerHandler.atualizarVisitante(id, nome, email, password);
+        response.sendRedirect(request.getContextPath() + "/customer?mensagem=Visitante atualizado com sucesso!");
       } else {
-        if (password == null || password.isEmpty()) {
-          request.setAttribute("erro", "Senha é obrigatória para novo visitante.");
-          exibirFormulario(request, response, null);
-          return;
-        }
-
-        if (customerRepository.findByEmail(email).isPresent()) {
-          request.setAttribute("erro", "Email já cadastrado.");
-          Customer visitante = new Customer();
-          visitante.setNome(nome);
-          visitante.setEmail(email);
-          exibirFormulario(request, response, visitante);
-          return;
-        }
-
-        Customer visitante = new Customer(nome, email, password);
-        customerRepository.save(visitante);
+        customerHandler.criarVisitante(nome, email, password);
         response.sendRedirect(request.getContextPath() + "/customer?mensagem=Visitante cadastrado com sucesso!");
       }
     } catch (Exception e) {
-      request.setAttribute("erro", "Erro ao salvar visitante: " + e.getMessage());
+      request.setAttribute("erro", e.getMessage());
 
       Customer visitante = new Customer();
       if (id != null && !id.isEmpty()) {
-        visitante.setId(UUID.fromString(id));
+        try {
+          visitante.setId(UUID.fromString(id));
+        } catch (IllegalArgumentException ignored) {
+        }
       }
-      visitante.setNome(nome);
-      visitante.setEmail(email);
+      visitante.setNome(nome != null ? nome : "");
+      visitante.setEmail(email != null ? email : "");
 
       exibirFormulario(request, response, visitante);
     }
@@ -203,15 +145,9 @@ public class CustomerServlet extends BaseServlet {
   private void excluirVisitante(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String id = request.getParameter("id");
-    if (id == null || id.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/customer");
-      return;
-    }
 
     try {
-      UUID uuid = UUID.fromString(id);
-      customerRepository.delete(uuid);
-
+      customerHandler.excluirVisitante(id);
       String mensagem = java.net.URLEncoder.encode("Visitante excluído com sucesso!", "UTF-8");
       response.sendRedirect(request.getContextPath() + "/customer?mensagem=" + mensagem);
     } catch (Exception e) {
