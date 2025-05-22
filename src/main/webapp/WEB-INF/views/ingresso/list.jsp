@@ -5,9 +5,9 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <% pageContext.setAttribute("formatter", java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")); %>
 
-<t:master title="Meus Ingressos">
+<t:master title="${isAdmin ? 'Todos os Ingressos' : 'Meus Ingressos'}">
     <div class="container">
-        <h1 class="section-title">Meus Ingressos</h1>
+        <h1 class="section-title">${isAdmin ? 'Todos os Ingressos' : 'Meus Ingressos'}</h1>
         <form method="get" style="margin-bottom:0.1rem;display:flex;gap:1rem;flex-wrap:wrap;">
             <label>
                 Status:
