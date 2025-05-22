@@ -2,7 +2,6 @@ package controllers;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -16,7 +15,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @WebServlet("/auth/*")
-public class AuthServlet extends HttpServlet {
+public class AuthServlet extends BaseServlet {
 
     private final CustomerRepository customerRepository;
     private final FuncionarioRepository funcionarioRepository;
@@ -80,12 +79,12 @@ public class AuthServlet extends HttpServlet {
 
     private void showLoginForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/login.jsp");
     }
 
     private void showRegisterForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/register.jsp");
     }
 
     private void handleLogin(HttpServletRequest request, HttpServletResponse response)
@@ -114,7 +113,7 @@ public class AuthServlet extends HttpServlet {
             Customer customer = customerOpt.get();
             if (PasswordUtils.verifyPassword(password, customer.getPassword())) {
                 createCustomerSession(request, customer);
-                redirectToDashboard(request, response, "VISITANTE");
+                redirectToDashboard(request, response, ROLE_VISITANTE);
                 return;
             }
         }
@@ -193,7 +192,7 @@ public class AuthServlet extends HttpServlet {
     private void createCustomerSession(HttpServletRequest request, Customer customer) {
         HttpSession session = request.getSession();
         session.setAttribute("user", customer);
-        session.setAttribute("role", "VISITANTE");
+        session.setAttribute("role", ROLE_VISITANTE);
         session.setAttribute("userId", customer.getId());
         session.setAttribute("userName", customer.getNome());
         session.setAttribute("userEmail", customer.getEmail());
@@ -203,9 +202,9 @@ public class AuthServlet extends HttpServlet {
             throws IOException {
         String redirectUrl;
 
-        if ("VISITANTE".equals(role)) {
+        if (ROLE_VISITANTE.equals(role)) {
             redirectUrl = "/dashboard/visitor";
-        } else if ("ADMINISTRADOR".equals(role)) {
+        } else if (ROLE_ADMINISTRADOR.equals(role)) {
             redirectUrl = "/dashboard/admin";
         } else {
             redirectUrl = "/dashboard/funcionario";

@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @WebServlet("/animal/*")
-public class AnimalServlet extends HttpServlet {
+public class AnimalServlet extends BaseServlet {
   private final AnimalRepository animalRepository;
   private final HabitatRepository habitatRepository;
 
@@ -34,7 +34,19 @@ public class AnimalServlet extends HttpServlet {
     String pathInfo = request.getPathInfo();
 
     try {
-      if (pathInfo == null || "/".equals(pathInfo) || "/galeria".equals(pathInfo)) {
+      if (pathInfo != null && pathInfo.equals("/galeria")) {
+        if (!requireAuthentication(request, response)) {
+          return;
+        }
+        showAnimalList(request, response);
+        return;
+      }
+
+      if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+        return;
+      }
+
+      if (pathInfo == null || "/".equals(pathInfo)) {
         showAnimalList(request, response);
         return;
       }
@@ -61,6 +73,11 @@ public class AnimalServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+
+    if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String pathInfo = request.getPathInfo();
 
     try {
@@ -106,7 +123,7 @@ public class AnimalServlet extends HttpServlet {
     request.setAttribute("generos", Genero.values());
     request.setAttribute("tiposAmbiente", TipoAmbiente.values());
 
-    request.getRequestDispatcher("/WEB-INF/views/animal/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/animal/list.jsp");
   }
 
   private void showAnimalDetails(HttpServletRequest request, HttpServletResponse response)
@@ -127,7 +144,7 @@ public class AnimalServlet extends HttpServlet {
     }
 
     request.setAttribute("animal", optAnimal.get());
-    request.getRequestDispatcher("/WEB-INF/views/animal/details.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/animal/details.jsp");
   }
 
   private void showNewAnimalForm(HttpServletRequest request, HttpServletResponse response)
@@ -137,7 +154,7 @@ public class AnimalServlet extends HttpServlet {
     request.setAttribute("statusSaude", StatusSaude.values());
     request.setAttribute("habitats", habitatRepository.findAll());
 
-    request.getRequestDispatcher("/WEB-INF/views/animal/form.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/animal/form.jsp");
   }
 
   private void processCreateAnimal(HttpServletRequest request, HttpServletResponse response)
@@ -199,7 +216,6 @@ public class AnimalServlet extends HttpServlet {
         }
       }
     } catch (NumberFormatException ignored) {
-
     }
 
     return page;

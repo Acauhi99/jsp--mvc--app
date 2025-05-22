@@ -6,21 +6,16 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 
 @WebServlet("/perfil")
-public class PerfilServlet extends HttpServlet {
-
-  private static final String ROLE_VISITANTE = "VISITANTE";
-  private static final String ROLE_ADMINISTRADOR = "ADMINISTRADOR";
+public class PerfilServlet extends BaseServlet {
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    HttpSession session = req.getSession(false);
-    if (session == null || session.getAttribute("user") == null) {
-      resp.sendRedirect(req.getContextPath() + "/auth/login");
+    if (!requireAuthentication(req, resp)) {
       return;
     }
 
-    String role = determineUserRole(session);
+    String role = determineUserRole(req.getSession(false));
     forwardToAppropriateView(req, resp, role);
   }
 
@@ -72,6 +67,6 @@ public class PerfilServlet extends HttpServlet {
       viewPath = "/WEB-INF/views/perfil/funcionario.jsp";
     }
 
-    req.getRequestDispatcher(viewPath).forward(req, resp);
+    forwardToView(req, resp, viewPath);
   }
 }

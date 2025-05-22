@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(urlPatterns = { "/habitat", "/habitat/novo" })
-public class HabitatServlet extends HttpServlet {
+public class HabitatServlet extends BaseServlet {
   private final HabitatRepository habitatRepo;
 
   public HabitatServlet() {
@@ -24,12 +24,16 @@ public class HabitatServlet extends HttpServlet {
     String path = request.getServletPath();
 
     if ("/habitat/novo".equals(path)) {
-      if (!verificarAcesso(request, response)) {
+      if (!requireAnyRole(request, response, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
         return;
       }
 
       request.setAttribute("tiposAmbiente", TipoAmbiente.values());
-      request.getRequestDispatcher("/WEB-INF/views/habitat/form.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
+      return;
+    }
+
+    if (!requireAuthentication(request, response)) {
       return;
     }
 
@@ -42,29 +46,12 @@ public class HabitatServlet extends HttpServlet {
     String path = request.getServletPath();
 
     if ("/habitat/novo".equals(path)) {
-      if (!verificarAcesso(request, response)) {
+      if (!requireAnyRole(request, response, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
         return;
       }
 
       cadastrarHabitat(request, response);
     }
-  }
-
-  private boolean verificarAcesso(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    HttpSession session = request.getSession(false);
-    if (session == null || session.getAttribute("user") == null) {
-      response.sendRedirect(request.getContextPath() + "/auth/login");
-      return false;
-    }
-
-    String role = (String) session.getAttribute("role");
-    if (!"ADMINISTRADOR".equals(role)) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return false;
-    }
-
-    return true;
   }
 
   private void listarHabitats(HttpServletRequest request, HttpServletResponse response)
@@ -85,7 +72,7 @@ public class HabitatServlet extends HttpServlet {
     request.setAttribute("habitats", habitats);
     request.setAttribute("tiposAmbiente", TipoAmbiente.values());
     request.setAttribute("tipoAmbiente", tipoAmbiente);
-    request.getRequestDispatcher("/WEB-INF/views/habitat/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/habitat/list.jsp");
   }
 
   private void cadastrarHabitat(HttpServletRequest request, HttpServletResponse response)
@@ -99,7 +86,7 @@ public class HabitatServlet extends HttpServlet {
     if (nome == null || nome.isEmpty() || tipoAmbienteStr == null || tipoAmbienteStr.isEmpty()) {
       request.setAttribute("erro", "Nome e tipo de ambiente são obrigatórios");
       request.setAttribute("tiposAmbiente", TipoAmbiente.values());
-      request.getRequestDispatcher("/WEB-INF/views/habitat/form.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
       return;
     }
 
@@ -124,7 +111,7 @@ public class HabitatServlet extends HttpServlet {
     } catch (Exception e) {
       request.setAttribute("erro", "Erro ao cadastrar habitat: " + e.getMessage());
       request.setAttribute("tiposAmbiente", TipoAmbiente.values());
-      request.getRequestDispatcher("/WEB-INF/views/habitat/form.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/habitat/form.jsp");
     }
   }
 }

@@ -2,7 +2,6 @@ package controllers;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import models.Alimentacao;
@@ -19,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @WebServlet("/alimentacao/*")
-public class AlimentacaoServlet extends HttpServlet {
+public class AlimentacaoServlet extends BaseServlet {
 
     private final AlimentacaoRepository alimentacaoRepository;
     private final AnimalRepository animalRepository;
@@ -34,6 +33,10 @@ public class AlimentacaoServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+            return;
+        }
 
         String pathInfo = request.getPathInfo();
 
@@ -66,6 +69,10 @@ public class AlimentacaoServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+            return;
+        }
+
         if (request.getParameter("_method") != null && request.getParameter("_method").equals("DELETE")) {
             processDelete(request, response);
             return;
@@ -83,7 +90,7 @@ public class AlimentacaoServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setAttribute("animais", animalRepository.findAll());
         request.setAttribute("funcionarios", funcionarioRepository.findAll());
-        request.getRequestDispatcher("/WEB-INF/views/alimentacao/form.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/alimentacao/form.jsp");
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response, String idStr)
@@ -99,7 +106,7 @@ public class AlimentacaoServlet extends HttpServlet {
         request.setAttribute("alimentacao", optAlimentacao.get());
         request.setAttribute("animais", animalRepository.findAll());
         request.setAttribute("funcionarios", funcionarioRepository.findAll());
-        request.getRequestDispatcher("/WEB-INF/views/alimentacao/form.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/alimentacao/form.jsp");
     }
 
     private void showDetails(HttpServletRequest request, HttpServletResponse response, String idStr)
@@ -113,7 +120,7 @@ public class AlimentacaoServlet extends HttpServlet {
         }
 
         request.setAttribute("alimentacao", optAlimentacao.get());
-        request.getRequestDispatcher("/WEB-INF/views/alimentacao/details.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/alimentacao/details.jsp");
     }
 
     private void listAlimentacoes(HttpServletRequest request, HttpServletResponse response)
@@ -130,7 +137,7 @@ public class AlimentacaoServlet extends HttpServlet {
 
         request.setAttribute("animais", animalRepository.findAll());
         request.setAttribute("alimentacoes", alimentacoes);
-        request.getRequestDispatcher("/WEB-INF/views/alimentacao/list.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/alimentacao/list.jsp");
     }
 
     private void processCreateOrUpdate(HttpServletRequest request, HttpServletResponse response)

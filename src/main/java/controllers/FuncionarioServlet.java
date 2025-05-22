@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @WebServlet(urlPatterns = { "/funcionario", "/funcionario/veterinario", "/funcionario/novo", "/funcionario/editar",
     "/funcionario/detalhes", "/funcionario/excluir" })
-public class FuncionarioServlet extends HttpServlet {
+public class FuncionarioServlet extends BaseServlet {
 
   private final FuncionarioRepository funcionarioRepository;
 
@@ -27,7 +27,7 @@ public class FuncionarioServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String path = request.getServletPath();
 
-    if (!verificarAcesso(request, response)) {
+    if (!requireRole(request, response, ROLE_ADMINISTRADOR)) {
       return;
     }
 
@@ -57,7 +57,7 @@ public class FuncionarioServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String path = request.getServletPath();
 
-    if (!verificarAcesso(request, response)) {
+    if (!requireRole(request, response, ROLE_ADMINISTRADOR)) {
       return;
     }
 
@@ -70,35 +70,18 @@ public class FuncionarioServlet extends HttpServlet {
     }
   }
 
-  private boolean verificarAcesso(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    HttpSession session = request.getSession(false);
-
-    if (session == null || session.getAttribute("user") == null) {
-      response.sendRedirect(request.getContextPath() + "/auth/login");
-      return false;
-    }
-
-    String role = (String) session.getAttribute("role");
-    if (!"ADMINISTRADOR".equals(role)) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return false;
-    }
-
-    return true;
-  }
-
   private void listarFuncionarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     List<Funcionario> funcionarios = funcionarioRepository.findAll();
     request.setAttribute("funcionarios", funcionarios);
-    request.getRequestDispatcher("/WEB-INF/views/funcionario/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/funcionario/list.jsp");
   }
 
   private void listarVeterinarios(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     List<Funcionario> veterinarios = funcionarioRepository.findByCargo(Cargo.VETERINARIO);
     request.setAttribute("veterinarios", veterinarios);
-    request.getRequestDispatcher("/WEB-INF/views/veterinario/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/veterinario/list.jsp");
   }
 
   private void exibirFormulario(HttpServletRequest request, HttpServletResponse response, Funcionario funcionario)
@@ -115,9 +98,9 @@ public class FuncionarioServlet extends HttpServlet {
     request.setAttribute("tipoFuncionario", tipoFuncionario);
 
     if ("VETERINARIO".equals(tipoFuncionario)) {
-      request.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/veterinario/edit.jsp");
     } else {
-      request.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/funcionario/edit.jsp");
     }
   }
 
@@ -139,10 +122,10 @@ public class FuncionarioServlet extends HttpServlet {
 
         if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
           request.setAttribute("tipoFuncionario", "VETERINARIO");
-          request.getRequestDispatcher("/WEB-INF/views/veterinario/edit.jsp").forward(request, response);
+          forwardToView(request, response, "/WEB-INF/views/veterinario/edit.jsp");
         } else {
           request.setAttribute("tipoFuncionario", funcionario.getCargo().toString());
-          request.getRequestDispatcher("/WEB-INF/views/funcionario/edit.jsp").forward(request, response);
+          forwardToView(request, response, "/WEB-INF/views/funcionario/edit.jsp");
         }
       } else {
         response.sendRedirect(request.getContextPath() + "/funcionario");
@@ -169,9 +152,9 @@ public class FuncionarioServlet extends HttpServlet {
         request.setAttribute("funcionario", funcionario);
 
         if (Cargo.VETERINARIO.equals(funcionario.getCargo())) {
-          request.getRequestDispatcher("/WEB-INF/views/veterinario/details.jsp").forward(request, response);
+          forwardToView(request, response, "/WEB-INF/views/veterinario/details.jsp");
         } else {
-          request.getRequestDispatcher("/WEB-INF/views/funcionario/details.jsp").forward(request, response);
+          forwardToView(request, response, "/WEB-INF/views/funcionario/details.jsp");
         }
       } else {
         response.sendRedirect(request.getContextPath() + "/funcionario");

@@ -18,52 +18,48 @@ import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = { "/ingresso", "/ingresso/comprar", "/ingresso/admin", "/ingresso/detalhes",
         "/ingresso/utilizar" })
-public class IngressoServlet extends HttpServlet {
+public class IngressoServlet extends BaseServlet {
 
-    private final IngressoRepository ingressoRepo = new IngressoRepository();
-    private final CustomerRepository customerRepo = new CustomerRepository();
+    private final IngressoRepository ingressoRepo;
+    private final CustomerRepository customerRepo;
+
+    public IngressoServlet() {
+        this.ingressoRepo = new IngressoRepository();
+        this.customerRepo = new CustomerRepository();
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
-        HttpSession session = req.getSession(false);
 
-        if (session == null || session.getAttribute("user") == null) {
+        if (!requireAuthentication(req, resp)) {
+            return;
+        }
+
+        if ("/ingresso/admin".equals(path)) {
+            if (!requireRole(req, resp, ROLE_ADMINISTRADOR)) {
+                return;
+            }
+            showAdminIngressoList(req, resp);
+            return;
+        }
+
+        UUID userId = (UUID) req.getSession().getAttribute("userId");
+        Customer user = customerRepo.findById(userId).orElse(null);
+
+        if (user == null && ROLE_VISITANTE.equals(getUserRole(req))) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
             return;
         }
 
-        String role = (String) session.getAttribute("role");
-        boolean isAdmin = "ADMINISTRADOR".equals(role);
-        UUID userId = (UUID) session.getAttribute("userId");
-        Customer user = customerRepo.findById(userId).orElse(null);
-
         switch (path) {
-            case "/ingresso/admin":
-                if (!isAdmin) {
-                    resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-                    return;
-                }
-                showAdminIngressoList(req, resp);
-                break;
-
             case "/ingresso/detalhes":
-                showIngressoDetails(req, resp, isAdmin, user);
+                showIngressoDetails(req, resp, ROLE_ADMINISTRADOR.equals(getUserRole(req)), user);
                 break;
-
             case "/ingresso/comprar":
-                if (user == null) {
-                    resp.sendRedirect(req.getContextPath() + "/auth/login");
-                    return;
-                }
-                req.getRequestDispatcher("/WEB-INF/views/ingresso/buy.jsp").forward(req, resp);
+                forwardToView(req, resp, "/WEB-INF/views/ingresso/buy.jsp");
                 break;
-
             default:
-                if (user == null) {
-                    resp.sendRedirect(req.getContextPath() + "/auth/login");
-                    return;
-                }
                 showUserIngressoList(req, resp, user);
                 break;
         }
@@ -71,20 +67,15 @@ public class IngressoServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String path = req.getServletPath();
-        HttpSession session = req.getSession(false);
-
-        if (session == null || session.getAttribute("user") == null) {
-            resp.sendRedirect(req.getContextPath() + "/auth/login");
+        if (!requireAuthentication(req, resp)) {
             return;
         }
 
-        String role = (String) session.getAttribute("role");
-        boolean isAdmin = "ADMINISTRADOR".equals(role);
-        UUID userId = (UUID) session.getAttribute("userId");
+        String path = req.getServletPath();
+        UUID userId = (UUID) req.getSession().getAttribute("userId");
         Customer user = customerRepo.findById(userId).orElse(null);
 
-        if (user == null) {
+        if (user == null && ROLE_VISITANTE.equals(getUserRole(req))) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
             return;
         }
@@ -93,19 +84,15 @@ public class IngressoServlet extends HttpServlet {
             case "/ingresso/comprar":
                 processIngressoPurchase(req, resp, user);
                 break;
-
             case "/ingresso/utilizar":
                 processIngressoUsage(req, resp, user);
                 break;
-
             case "/ingresso/admin/toggle-status":
-                if (!isAdmin) {
-                    resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                if (!requireRole(req, resp, ROLE_ADMINISTRADOR)) {
                     return;
                 }
                 toggleIngressoStatus(req, resp);
                 break;
-
             default:
                 resp.sendRedirect(req.getContextPath() + "/ingresso");
                 break;
@@ -135,7 +122,7 @@ public class IngressoServlet extends HttpServlet {
         req.setAttribute("status", status);
         req.setAttribute("isAdmin", true);
 
-        req.getRequestDispatcher("/WEB-INF/views/ingresso/list.jsp").forward(req, resp);
+        forwardToView(req, resp, "/WEB-INF/views/ingresso/list.jsp");
     }
 
     private void showUserIngressoList(HttpServletRequest req, HttpServletResponse resp, Customer user)
@@ -160,7 +147,7 @@ public class IngressoServlet extends HttpServlet {
         req.setAttribute("dataOrder", dataOrder);
         req.setAttribute("status", status);
 
-        req.getRequestDispatcher("/WEB-INF/views/ingresso/list.jsp").forward(req, resp);
+        forwardToView(req, resp, "/WEB-INF/views/ingresso/list.jsp");
     }
 
     private List<Ingresso> filterAndSortIngressos(List<Ingresso> ingressos, String status,
@@ -227,7 +214,7 @@ public class IngressoServlet extends HttpServlet {
             req.setAttribute("ingresso", ingresso);
             req.setAttribute("isAdmin", isAdmin);
 
-            req.getRequestDispatcher("/WEB-INF/views/ingresso/details.jsp").forward(req, resp);
+            forwardToView(req, resp, "/WEB-INF/views/ingresso/details.jsp");
         } catch (IllegalArgumentException e) {
             resp.sendRedirect(req.getContextPath() + (isAdmin ? "/ingresso/admin" : "/ingresso"));
         }

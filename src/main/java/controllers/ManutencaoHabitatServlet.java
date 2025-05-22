@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @WebServlet({ "/manutencao", "/manutencao/novo", "/manutencao/salvar", "/manutencao/detalhes", "/manutencao/editar" })
-public class ManutencaoHabitatServlet extends HttpServlet {
+public class ManutencaoHabitatServlet extends BaseServlet {
 
   private final ManutencaoHabitatRepository manutencaoRepo = new ManutencaoHabitatRepository();
   private final HabitatRepository habitatRepo = new HabitatRepository();
@@ -28,6 +28,10 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    if (!requireAnyRole(req, resp, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String path = req.getServletPath();
     switch (path) {
       case "/manutencao":
@@ -49,6 +53,10 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    if (!requireAnyRole(req, resp, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String path = req.getServletPath();
     if ("/manutencao/salvar".equals(path)) {
       salvarSolicitacao(req, resp);
@@ -59,7 +67,6 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
   private void listarSolicitacoes(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    // Parse parameters
     StatusManutencao status = null;
     PrioridadeManutencao prioridade = null;
     UUID habitatId = null;
@@ -70,7 +77,6 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       try {
         status = StatusManutencao.valueOf(statusParam);
       } catch (IllegalArgumentException e) {
-
       }
     }
 
@@ -79,7 +85,6 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       try {
         prioridade = PrioridadeManutencao.valueOf(prioridadeParam);
       } catch (IllegalArgumentException e) {
-
       }
     }
 
@@ -88,7 +93,6 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       try {
         habitatId = UUID.fromString(habitatParam);
       } catch (IllegalArgumentException e) {
-
       }
     }
 
@@ -97,7 +101,6 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       try {
         responsavelId = UUID.fromString(responsavelParam);
       } catch (IllegalArgumentException e) {
-
       }
     }
 
@@ -113,7 +116,7 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
     carregarDadosSelecao(req);
     req.setAttribute("manutencoes", pageList);
-    req.getRequestDispatcher("/WEB-INF/views/manutencao/list.jsp").forward(req, resp);
+    forwardToView(req, resp, "/WEB-INF/views/manutencao/list.jsp");
   }
 
   private List<ManutencaoHabitat> aplicarPaginacao(HttpServletRequest req, HttpServletResponse resp,
@@ -168,7 +171,7 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       req.setAttribute("manutencao", manutencao);
     }
 
-    req.getRequestDispatcher("/WEB-INF/views/manutencao/form.jsp").forward(req, resp);
+    forwardToView(req, resp, "/WEB-INF/views/manutencao/form.jsp");
   }
 
   private void editarSolicitacao(HttpServletRequest req, HttpServletResponse resp)
@@ -190,7 +193,7 @@ public class ManutencaoHabitatServlet extends HttpServlet {
 
       carregarDadosSelecao(req);
       req.setAttribute("manutencao", manutencaoOpt.get());
-      req.getRequestDispatcher("/WEB-INF/views/manutencao/edit.jsp").forward(req, resp);
+      forwardToView(req, resp, "/WEB-INF/views/manutencao/edit.jsp");
 
     } catch (IllegalArgumentException e) {
       resp.sendRedirect(req.getContextPath() + "/manutencao");
@@ -215,7 +218,7 @@ public class ManutencaoHabitatServlet extends HttpServlet {
       }
 
       req.setAttribute("manutencao", manutencaoOpt.get());
-      req.getRequestDispatcher("/WEB-INF/views/manutencao/details.jsp").forward(req, resp);
+      forwardToView(req, resp, "/WEB-INF/views/manutencao/details.jsp");
 
     } catch (IllegalArgumentException e) {
       resp.sendRedirect(req.getContextPath() + "/manutencao");

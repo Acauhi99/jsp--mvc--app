@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @WebServlet("/consulta/*")
-public class ConsultaVeterinariaServlet extends HttpServlet {
+public class ConsultaVeterinariaServlet extends BaseServlet {
 
   private final ConsultaVeterinariaRepository consultaRepository;
   private final AnimalRepository animalRepository;
@@ -33,6 +33,11 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+
+    if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String pathInfo = request.getPathInfo();
 
     try {
@@ -70,6 +75,11 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+
+    if (!requireAnyRole(request, response, ROLE_VETERINARIO, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String pathInfo = request.getPathInfo();
 
     try {
@@ -105,7 +115,7 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
     request.setAttribute("page", pageResult.currentPage);
     request.setAttribute("totalPages", pageResult.totalPages);
 
-    request.getRequestDispatcher("/WEB-INF/views/consulta/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/consulta/list.jsp");
   }
 
   private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response,
@@ -117,7 +127,7 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
       request.setAttribute("consulta", consulta);
     }
 
-    request.getRequestDispatcher("/WEB-INF/views/consulta/form.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/consulta/form.jsp");
   }
 
   private void editarConsulta(HttpServletRequest request, HttpServletResponse response)
@@ -139,7 +149,7 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
 
       carregarDadosParaFormulario(request);
       request.setAttribute("consulta", consultaOpt.get());
-      request.getRequestDispatcher("/WEB-INF/views/consulta/edit.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/consulta/edit.jsp");
 
     } catch (IllegalArgumentException e) {
       response.sendRedirect(request.getContextPath() + "/consulta");
@@ -164,7 +174,7 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
       }
 
       request.setAttribute("consulta", consultaOpt.get());
-      request.getRequestDispatcher("/WEB-INF/views/consulta/details.jsp").forward(request, response);
+      forwardToView(request, response, "/WEB-INF/views/consulta/details.jsp");
 
     } catch (IllegalArgumentException e) {
       response.sendRedirect(request.getContextPath() + "/consulta");
@@ -193,7 +203,7 @@ public class ConsultaVeterinariaServlet extends HttpServlet {
       }
     }
 
-    request.getRequestDispatcher("/WEB-INF/views/consulta/historico.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/consulta/historico.jsp");
   }
 
   private void salvarConsulta(HttpServletRequest request, HttpServletResponse response)

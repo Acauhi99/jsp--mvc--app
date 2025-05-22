@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @WebServlet(urlPatterns = { "/customer", "/customer/novo", "/customer/editar", "/customer/detalhes",
     "/customer/excluir" })
-public class CustomerServlet extends HttpServlet {
+public class CustomerServlet extends BaseServlet {
 
   private final CustomerRepository customerRepository;
 
@@ -25,7 +25,7 @@ public class CustomerServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String path = request.getServletPath();
 
-    if (!verificarAcesso(request, response)) {
+    if (!requireRole(request, response, ROLE_ADMINISTRADOR)) {
       return;
     }
 
@@ -52,7 +52,7 @@ public class CustomerServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String path = request.getServletPath();
 
-    if (!verificarAcesso(request, response)) {
+    if (!requireRole(request, response, ROLE_ADMINISTRADOR)) {
       return;
     }
 
@@ -65,28 +65,11 @@ public class CustomerServlet extends HttpServlet {
     }
   }
 
-  private boolean verificarAcesso(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    HttpSession session = request.getSession(false);
-
-    if (session == null || session.getAttribute("user") == null) {
-      response.sendRedirect(request.getContextPath() + "/auth/login");
-      return false;
-    }
-
-    String role = (String) session.getAttribute("role");
-    if (!"ADMINISTRADOR".equals(role)) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return false;
-    }
-
-    return true;
-  }
-
   private void listarVisitantes(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     List<Customer> visitantes = customerRepository.findAllWithIngressos();
     request.setAttribute("visitantes", visitantes);
-    request.getRequestDispatcher("/WEB-INF/views/visitante/list.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/visitante/list.jsp");
   }
 
   private void exibirFormulario(HttpServletRequest request, HttpServletResponse response, Customer visitante)
@@ -94,7 +77,7 @@ public class CustomerServlet extends HttpServlet {
     if (visitante != null) {
       request.setAttribute("visitante", visitante);
     }
-    request.getRequestDispatcher("/WEB-INF/views/visitante/edit.jsp").forward(request, response);
+    forwardToView(request, response, "/WEB-INF/views/visitante/edit.jsp");
   }
 
   private void editarVisitante(HttpServletRequest request, HttpServletResponse response)
@@ -111,7 +94,7 @@ public class CustomerServlet extends HttpServlet {
 
       if (optVisitante.isPresent()) {
         request.setAttribute("visitante", optVisitante.get());
-        request.getRequestDispatcher("/WEB-INF/views/visitante/edit.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/visitante/edit.jsp");
       } else {
         response.sendRedirect(request.getContextPath() + "/customer");
       }
@@ -135,7 +118,7 @@ public class CustomerServlet extends HttpServlet {
 
       if (optVisitante.isPresent()) {
         request.setAttribute("visitante", optVisitante.get());
-        request.getRequestDispatcher("/WEB-INF/views/visitante/details.jsp").forward(request, response);
+        forwardToView(request, response, "/WEB-INF/views/visitante/details.jsp");
       } else {
         response.sendRedirect(request.getContextPath() + "/customer");
       }

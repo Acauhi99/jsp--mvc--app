@@ -12,6 +12,11 @@ import java.util.*;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
+    private static final String ROLE_ADMINISTRADOR = "ADMINISTRADOR";
+    private static final String ROLE_VETERINARIO = "VETERINARIO";
+    private static final String ROLE_MANUTENCAO = "MANUTENCAO";
+    private static final String ROLE_VISITANTE = "VISITANTE";
+
     // Endpoints públicos (acessíveis sem login)
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
             "/",
@@ -25,69 +30,59 @@ public class AuthFilter implements Filter {
             "/js/*",
             "/images/*");
 
-    // Mapeamento de URLs e funções permitidas
     private static final Map<String, Set<String>> ROLE_ACCESS_MAP = new HashMap<>();
 
     static {
-        // Admin tem acesso a todas as rotas restritas
-        Set<String> adminRoles = Collections.singleton("ADMINISTRADOR");
+        initializeRoleAccessMap();
+    }
 
+    private static void initializeRoleAccessMap() {
         // Rotas de acesso para visitantes
-        Set<String> visitorRoles = new HashSet<>(Arrays.asList("VISITANTE", "ADMINISTRADOR"));
-        ROLE_ACCESS_MAP.put("/dashboard/visitor", visitorRoles);
-        ROLE_ACCESS_MAP.put("/ingresso", visitorRoles);
-        ROLE_ACCESS_MAP.put("/ingresso/comprar", visitorRoles);
-        ROLE_ACCESS_MAP.put("/ingresso/detalhes", visitorRoles);
-        ROLE_ACCESS_MAP.put("/ingresso/utilizar", visitorRoles);
-        ROLE_ACCESS_MAP.put("/animal/galeria", visitorRoles);
+        Set<String> visitorRoles = new HashSet<>(Arrays.asList(ROLE_VISITANTE, ROLE_ADMINISTRADOR));
+        Arrays.asList(
+                "/dashboard/visitor",
+                "/ingresso",
+                "/ingresso/comprar",
+                "/ingresso/detalhes",
+                "/ingresso/utilizar",
+                "/animal/galeria").forEach(route -> ROLE_ACCESS_MAP.put(route, visitorRoles));
 
         // Rotas apenas para admin
-        ROLE_ACCESS_MAP.put("/dashboard/admin", adminRoles);
-        ROLE_ACCESS_MAP.put("/customer", adminRoles);
-        ROLE_ACCESS_MAP.put("/customer/novo", adminRoles);
-        ROLE_ACCESS_MAP.put("/customer/editar", adminRoles);
-        ROLE_ACCESS_MAP.put("/customer/detalhes", adminRoles);
-        ROLE_ACCESS_MAP.put("/customer/excluir", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario/novo", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario/editar", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario/detalhes", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario/excluir", adminRoles);
-        ROLE_ACCESS_MAP.put("/funcionario/veterinario", adminRoles);
-        ROLE_ACCESS_MAP.put("/ingresso/admin", adminRoles);
-        ROLE_ACCESS_MAP.put("/relatorio/consultas", adminRoles);
-        ROLE_ACCESS_MAP.put("/relatorio/vendas", adminRoles);
+        Set<String> adminRoles = Collections.singleton(ROLE_ADMINISTRADOR);
+        Arrays.asList(
+                "/dashboard/admin",
+                "/customer", "/customer/novo", "/customer/editar", "/customer/detalhes", "/customer/excluir",
+                "/funcionario", "/funcionario/novo", "/funcionario/editar", "/funcionario/detalhes",
+                "/funcionario/excluir", "/funcionario/veterinario",
+                "/ingresso/admin",
+                "/relatorio/consultas", "/relatorio/vendas").forEach(route -> ROLE_ACCESS_MAP.put(route, adminRoles));
 
         // Rotas para veterinários e admin
-        Set<String> vetRoles = new HashSet<>(Arrays.asList("VETERINARIO", "ADMINISTRADOR"));
-        ROLE_ACCESS_MAP.put("/dashboard/funcionario",
-                new HashSet<>(Arrays.asList("VETERINARIO", "MANUTENCAO", "ADMINISTRADOR")));
-        ROLE_ACCESS_MAP.put("/consulta", vetRoles);
-        ROLE_ACCESS_MAP.put("/consulta/nova", vetRoles);
-        ROLE_ACCESS_MAP.put("/consulta/detalhes", vetRoles);
-        ROLE_ACCESS_MAP.put("/consulta/editar", vetRoles);
-        ROLE_ACCESS_MAP.put("/consulta/historico", vetRoles);
-        ROLE_ACCESS_MAP.put("/alimentacao", vetRoles);
-        ROLE_ACCESS_MAP.put("/alimentacao/novo", vetRoles);
-        ROLE_ACCESS_MAP.put("/alimentacao/editar", vetRoles);
+        Set<String> vetRoles = new HashSet<>(Arrays.asList(ROLE_VETERINARIO, ROLE_ADMINISTRADOR));
+        Arrays.asList(
+                "/consulta", "/consulta/nova", "/consulta/detalhes", "/consulta/editar", "/consulta/historico",
+                "/alimentacao", "/alimentacao/novo", "/alimentacao/editar")
+                .forEach(route -> ROLE_ACCESS_MAP.put(route, vetRoles));
+
+        // Rota para todos os funcionários
+        Set<String> allStaffRoles = new HashSet<>(
+                Arrays.asList(ROLE_VETERINARIO, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR));
+        ROLE_ACCESS_MAP.put("/dashboard/funcionario", allStaffRoles);
 
         // Rotas para manutenção e admin
-        Set<String> manutencaoRoles = new HashSet<>(Arrays.asList("MANUTENCAO", "ADMINISTRADOR"));
-        ROLE_ACCESS_MAP.put("/manutencao", manutencaoRoles);
-        ROLE_ACCESS_MAP.put("/manutencao/novo", manutencaoRoles);
-        ROLE_ACCESS_MAP.put("/manutencao/salvar", manutencaoRoles);
-        ROLE_ACCESS_MAP.put("/manutencao/detalhes", manutencaoRoles);
-        ROLE_ACCESS_MAP.put("/manutencao/editar", manutencaoRoles);
+        Set<String> manutencaoRoles = new HashSet<>(Arrays.asList(ROLE_MANUTENCAO, ROLE_ADMINISTRADOR));
+        Arrays.asList(
+                "/manutencao", "/manutencao/novo", "/manutencao/salvar", "/manutencao/detalhes", "/manutencao/editar",
+                "/habitat/novo").forEach(route -> ROLE_ACCESS_MAP.put(route, manutencaoRoles));
 
         // Rotas que qualquer usuário logado pode acessar
         Set<String> loggedInRoles = new HashSet<>(
-                Arrays.asList("VISITANTE", "VETERINARIO", "MANUTENCAO", "ADMINISTRADOR"));
-        ROLE_ACCESS_MAP.put("/perfil", loggedInRoles);
-        ROLE_ACCESS_MAP.put("/auth/logout", loggedInRoles);
-        ROLE_ACCESS_MAP.put("/habitat", loggedInRoles);
-        ROLE_ACCESS_MAP.put("/habitat/novo", new HashSet<>(Arrays.asList("MANUTENCAO", "ADMINISTRADOR")));
+                Arrays.asList(ROLE_VISITANTE, ROLE_VETERINARIO, ROLE_MANUTENCAO, ROLE_ADMINISTRADOR));
+        Arrays.asList(
+                "/perfil", "/auth/logout", "/habitat").forEach(route -> ROLE_ACCESS_MAP.put(route, loggedInRoles));
 
-        ROLE_ACCESS_MAP.put("/animal", new HashSet<>(Arrays.asList("VETERINARIO", "ADMINISTRADOR")));
+        // Rotas específicas
+        ROLE_ACCESS_MAP.put("/animal", new HashSet<>(Arrays.asList(ROLE_VETERINARIO, ROLE_ADMINISTRADOR)));
     }
 
     private static final Set<String> VALID_ROUTES = new HashSet<>(Arrays.asList(
@@ -201,7 +196,7 @@ public class AuthFilter implements Filter {
     }
 
     private boolean hasAccess(String path, String userRole) {
-        if ("ADMINISTRADOR".equals(userRole)) {
+        if (ROLE_ADMINISTRADOR.equals(userRole)) {
             return true;
         }
 

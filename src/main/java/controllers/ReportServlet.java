@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.DoubleSummaryStatistics;
 
 @WebServlet(urlPatterns = { "/relatorio/consultas", "/relatorio/vendas" })
-public class ReportServlet extends HttpServlet {
+public class ReportServlet extends BaseServlet {
 
   private final ConsultaVeterinariaRepository consultaRepo = new ConsultaVeterinariaRepository();
   private final IngressoRepository ingressoRepo = new IngressoRepository();
@@ -35,19 +35,11 @@ public class ReportServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    if (!requireRole(req, resp, ROLE_ADMINISTRADOR)) {
+      return;
+    }
+
     String path = req.getServletPath();
-    HttpSession session = req.getSession(false);
-
-    if (session == null || session.getAttribute("user") == null) {
-      resp.sendRedirect(req.getContextPath() + "/auth/login");
-      return;
-    }
-
-    String role = (String) session.getAttribute("role");
-    if (!"ADMINISTRADOR".equals(role)) {
-      resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
 
     if ("/relatorio/consultas".equals(path)) {
       gerarRelatorioConsultas(req, resp);
@@ -98,7 +90,7 @@ public class ReportServlet extends HttpServlet {
     req.setAttribute("dataInicio", dataInicio.format(DATE_FORMATTER));
     req.setAttribute("dataFim", dataFim.format(DATE_FORMATTER));
 
-    req.getRequestDispatcher("/WEB-INF/views/reports/consultas.jsp").forward(req, resp);
+    forwardToView(req, resp, "/WEB-INF/views/reports/consultas.jsp");
   }
 
   private Map<TipoConsulta, Long> inicializarMapaTipoConsulta() {
@@ -247,7 +239,7 @@ public class ReportServlet extends HttpServlet {
     req.setAttribute("ingressosUtilizados", ingressosUtilizados);
     req.setAttribute("percentualUtilizados", percentualUtilizados);
 
-    req.getRequestDispatcher("/WEB-INF/views/reports/vendas.jsp").forward(req, resp);
+    forwardToView(req, resp, "/WEB-INF/views/reports/vendas.jsp");
   }
 
   private List<Ingresso> filtrarIngressos(List<Ingresso> ingressos,
