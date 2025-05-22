@@ -5,9 +5,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Animal;
 import models.ConsultaVeterinaria;
-import repositories.AnimalRepository;
-import repositories.ConsultaVeterinariaRepository;
-import repositories.FuncionarioRepository;
 import handlers.ConsultaVeterinariaHandler;
 import handlers.ConsultaVeterinariaHandler.PageResult;
 
@@ -20,12 +17,7 @@ public class ConsultaVeterinariaServlet extends BaseServlet {
   private final ConsultaVeterinariaHandler consultaHandler;
 
   public ConsultaVeterinariaServlet() {
-    ConsultaVeterinariaRepository consultaRepository = new ConsultaVeterinariaRepository();
-    AnimalRepository animalRepository = new AnimalRepository();
-    FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
-
-    this.consultaHandler = new ConsultaVeterinariaHandler(
-        consultaRepository, animalRepository, funcionarioRepository);
+    this.consultaHandler = new ConsultaVeterinariaHandler();
   }
 
   @Override

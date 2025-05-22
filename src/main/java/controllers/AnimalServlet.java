@@ -4,8 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Animal;
-import repositories.AnimalRepository;
-import repositories.HabitatRepository;
 import handlers.AnimalHandler;
 
 import java.io.IOException;
@@ -18,9 +16,7 @@ public class AnimalServlet extends BaseServlet {
   private final AnimalHandler animalHandler;
 
   public AnimalServlet() {
-    AnimalRepository animalRepository = new AnimalRepository();
-    HabitatRepository habitatRepository = new HabitatRepository();
-    this.animalHandler = new AnimalHandler(animalRepository, habitatRepository);
+    this.animalHandler = new AnimalHandler();
   }
 
   @Override

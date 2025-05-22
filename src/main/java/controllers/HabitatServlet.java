@@ -5,7 +5,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Habitat;
 import models.Habitat.TipoAmbiente;
-import repositories.HabitatRepository;
 import handlers.HabitatHandler;
 
 import java.io.IOException;
@@ -16,8 +15,7 @@ public class HabitatServlet extends BaseServlet {
   private final HabitatHandler habitatHandler;
 
   public HabitatServlet() {
-    HabitatRepository habitatRepo = new HabitatRepository();
-    this.habitatHandler = new HabitatHandler(habitatRepo);
+    this.habitatHandler = new HabitatHandler();
   }
 
   @Override

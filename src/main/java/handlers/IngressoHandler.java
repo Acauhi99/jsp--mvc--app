@@ -18,9 +18,9 @@ public class IngressoHandler {
   private final IngressoRepository ingressoRepository;
   private final CustomerRepository customerRepository;
 
-  public IngressoHandler(IngressoRepository ingressoRepository, CustomerRepository customerRepository) {
-    this.ingressoRepository = ingressoRepository;
-    this.customerRepository = customerRepository;
+  public IngressoHandler() {
+    this.ingressoRepository = new IngressoRepository();
+    this.customerRepository = new CustomerRepository();
   }
 
   public List<Ingresso> listarTodosIngressos() {
@@ -29,6 +29,26 @@ public class IngressoHandler {
 
   public List<Ingresso> listarIngressosPorComprador(UUID compradorId) {
     return ingressoRepository.findByCompradorId(compradorId);
+  }
+
+  public Optional<Customer> buscarClientePorId(String idStr) {
+    if (idStr == null || idStr.isEmpty()) {
+      return Optional.empty();
+    }
+
+    try {
+      UUID id = UUID.fromString(idStr);
+      return customerRepository.findById(id);
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
+  }
+
+  public Customer buscarClientePorId(UUID id) {
+    if (id == null) {
+      return null;
+    }
+    return customerRepository.findById(id).orElse(null);
   }
 
   public List<Ingresso> listarIngressosPorStatus(boolean utilizado) {
@@ -127,7 +147,7 @@ public class IngressoHandler {
     }
   }
 
-  public List<Ingresso> comprarIngressos(String tipoStr, int quantidade, UUID compradorId) throws Exception {
+  public List<Ingresso> comprarIngressos(String tipoStr, int quantidade, String compradorIdStr) throws Exception {
     if (quantidade < 1 || quantidade > 10) {
       throw new Exception("Quantidade inválida. Mínimo: 1, Máximo: 10");
     }
@@ -137,6 +157,13 @@ public class IngressoHandler {
       tipo = TipoIngresso.valueOf(tipoStr);
     } catch (IllegalArgumentException e) {
       throw new Exception("Tipo de ingresso inválido");
+    }
+
+    UUID compradorId;
+    try {
+      compradorId = UUID.fromString(compradorIdStr);
+    } catch (IllegalArgumentException e) {
+      throw new Exception("ID de cliente inválido");
     }
 
     Optional<Customer> optComprador = customerRepository.findById(compradorId);
@@ -157,7 +184,7 @@ public class IngressoHandler {
     return ingressosComprados;
   }
 
-  public Ingresso utilizarIngresso(String ingressoIdStr, UUID userId) throws Exception {
+  public Ingresso utilizarIngresso(String ingressoIdStr, String userIdStr) throws Exception {
     if (ingressoIdStr == null || ingressoIdStr.isEmpty()) {
       throw new Exception("ID do ingresso não fornecido");
     }
@@ -167,6 +194,13 @@ public class IngressoHandler {
       ingressoId = UUID.fromString(ingressoIdStr);
     } catch (IllegalArgumentException e) {
       throw new Exception("ID de ingresso inválido");
+    }
+
+    UUID userId;
+    try {
+      userId = UUID.fromString(userIdStr);
+    } catch (IllegalArgumentException e) {
+      throw new Exception("ID de usuário inválido");
     }
 
     Optional<Ingresso> optIngresso = ingressoRepository.findById(ingressoId);
@@ -212,6 +246,19 @@ public class IngressoHandler {
 
     ingressoRepository.update(ingresso);
     return ingresso;
+  }
+
+  public int processarPaginacao(String pageParam) {
+    if (pageParam == null) {
+      return 1;
+    }
+
+    try {
+      int page = Integer.parseInt(pageParam);
+      return page < 1 ? 1 : page;
+    } catch (NumberFormatException e) {
+      return 1;
+    }
   }
 
   public static class PageResult<T> {

@@ -6,9 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import models.Alimentacao;
 import handlers.AlimentacaoHandler;
-import repositories.AlimentacaoRepository;
-import repositories.AnimalRepository;
-import repositories.FuncionarioRepository;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,12 +17,7 @@ public class AlimentacaoServlet extends BaseServlet {
     private final AlimentacaoHandler alimentacaoHandler;
 
     public AlimentacaoServlet() {
-        AlimentacaoRepository alimentacaoRepository = new AlimentacaoRepository();
-        AnimalRepository animalRepository = new AnimalRepository();
-        FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
-
-        this.alimentacaoHandler = new AlimentacaoHandler(
-                alimentacaoRepository, animalRepository, funcionarioRepository);
+        this.alimentacaoHandler = new AlimentacaoHandler();
     }
 
     @Override

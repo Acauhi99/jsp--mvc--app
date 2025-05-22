@@ -6,8 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import models.Customer;
 import models.Funcionario;
-import repositories.CustomerRepository;
-import repositories.FuncionarioRepository;
 import handlers.AuthHandler;
 
 import java.io.IOException;
@@ -19,9 +17,7 @@ public class AuthServlet extends BaseServlet {
     private final AuthHandler authHandler;
 
     public AuthServlet() {
-        CustomerRepository customerRepository = new CustomerRepository();
-        FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
-        this.authHandler = new AuthHandler(customerRepository, funcionarioRepository);
+        this.authHandler = new AuthHandler();
     }
 
     @Override

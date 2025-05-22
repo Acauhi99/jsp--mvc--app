@@ -4,9 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.ManutencaoHabitat;
-import repositories.HabitatRepository;
-import repositories.ManutencaoHabitatRepository;
-import repositories.FuncionarioRepository;
 import handlers.ManutencaoHabitatHandler;
 import handlers.ManutencaoHabitatHandler.PageResult;
 
@@ -20,10 +17,7 @@ public class ManutencaoHabitatServlet extends BaseServlet {
   private final ManutencaoHabitatHandler manutencaoHandler;
 
   public ManutencaoHabitatServlet() {
-    ManutencaoHabitatRepository manutencaoRepo = new ManutencaoHabitatRepository();
-    HabitatRepository habitatRepo = new HabitatRepository();
-    FuncionarioRepository funcionarioRepo = new FuncionarioRepository();
-    this.manutencaoHandler = new ManutencaoHabitatHandler(manutencaoRepo, habitatRepo, funcionarioRepo);
+    this.manutencaoHandler = new ManutencaoHabitatHandler();
   }
 
   @Override

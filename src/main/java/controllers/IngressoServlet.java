@@ -5,27 +5,20 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Ingresso;
 import models.Customer;
-import repositories.CustomerRepository;
-import repositories.IngressoRepository;
 import handlers.IngressoHandler;
 import handlers.IngressoHandler.PageResult;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @WebServlet(urlPatterns = { "/ingresso", "/ingresso/comprar", "/ingresso/admin", "/ingresso/detalhes",
         "/ingresso/utilizar" })
 public class IngressoServlet extends BaseServlet {
 
     private final IngressoHandler ingressoHandler;
-    private final CustomerRepository customerRepo;
 
     public IngressoServlet() {
-        IngressoRepository ingressoRepo = new IngressoRepository();
-        CustomerRepository customerRepo = new CustomerRepository();
-        this.ingressoHandler = new IngressoHandler(ingressoRepo, customerRepo);
-        this.customerRepo = customerRepo;
+        this.ingressoHandler = new IngressoHandler();
     }
 
     @Override
@@ -44,8 +37,8 @@ public class IngressoServlet extends BaseServlet {
             return;
         }
 
-        UUID userId = (UUID) req.getSession().getAttribute("userId");
-        Customer user = customerRepo.findById(userId).orElse(null);
+        String userIdStr = req.getSession().getAttribute("userId").toString();
+        Customer user = ingressoHandler.buscarClientePorId(userIdStr).orElse(null);
 
         if (user == null && ROLE_VISITANTE.equals(getUserRole(req))) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -72,8 +65,8 @@ public class IngressoServlet extends BaseServlet {
         }
 
         String path = req.getServletPath();
-        UUID userId = (UUID) req.getSession().getAttribute("userId");
-        Customer user = customerRepo.findById(userId).orElse(null);
+        String userIdStr = req.getSession().getAttribute("userId").toString();
+        Customer user = ingressoHandler.buscarClientePorId(userIdStr).orElse(null);
 
         if (user == null && ROLE_VISITANTE.equals(getUserRole(req))) {
             resp.sendRedirect(req.getContextPath() + "/auth/login");
@@ -106,7 +99,7 @@ public class IngressoServlet extends BaseServlet {
         String precoOrder = req.getParameter("precoOrder");
         String dataOrder = req.getParameter("dataOrder");
         String status = req.getParameter("status");
-        int page = getPageParam(req);
+        int page = ingressoHandler.processarPaginacao(req.getParameter("page"));
         int pageSize = 10;
 
         PageResult<Ingresso> pageResult = ingressoHandler.processarIngressosPaginados(
@@ -130,7 +123,7 @@ public class IngressoServlet extends BaseServlet {
         String precoOrder = req.getParameter("precoOrder");
         String dataOrder = req.getParameter("dataOrder");
         String status = req.getParameter("status");
-        int page = getPageParam(req);
+        int page = ingressoHandler.processarPaginacao(req.getParameter("page"));
         int pageSize = 10;
 
         PageResult<Ingresso> pageResult = ingressoHandler.processarIngressosPaginados(
@@ -190,7 +183,7 @@ public class IngressoServlet extends BaseServlet {
 
         try {
             int quantidade = Integer.parseInt(quantidadeStr);
-            ingressoHandler.comprarIngressos(tipoStr, quantidade, user.getId());
+            ingressoHandler.comprarIngressos(tipoStr, quantidade, user.getId().toString());
             resp.sendRedirect(req.getContextPath() + "/ingresso");
         } catch (Exception e) {
             req.setAttribute("erro", e.getMessage());
@@ -203,7 +196,7 @@ public class IngressoServlet extends BaseServlet {
         String ingressoId = req.getParameter("id");
 
         try {
-            ingressoHandler.utilizarIngresso(ingressoId, user.getId());
+            ingressoHandler.utilizarIngresso(ingressoId, user.getId().toString());
             resp.sendRedirect(req.getContextPath() + "/ingresso/detalhes?id=" + ingressoId + "&sucesso=true");
         } catch (Exception e) {
             resp.sendRedirect(req.getContextPath() + "/ingresso/detalhes?id=" + ingressoId + "&erro=" +
@@ -222,21 +215,5 @@ public class IngressoServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/ingresso/detalhes?id=" + ingressoId + "&erro=" +
                     java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
-    }
-
-    private int getPageParam(HttpServletRequest req) {
-        int page = 1;
-        try {
-            String pageParam = req.getParameter("page");
-            if (pageParam != null && !pageParam.isEmpty()) {
-                page = Integer.parseInt(pageParam);
-                if (page < 1) {
-                    page = 1;
-                }
-            }
-        } catch (NumberFormatException e) {
-            page = 1;
-        }
-        return page;
     }
 }

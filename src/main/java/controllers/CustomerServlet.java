@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Customer;
-import repositories.CustomerRepository;
 import handlers.CustomerHandler;
 
 import java.io.IOException;
@@ -19,8 +18,7 @@ public class CustomerServlet extends BaseServlet {
   private final CustomerHandler customerHandler;
 
   public CustomerServlet() {
-    CustomerRepository customerRepository = new CustomerRepository();
-    this.customerHandler = new CustomerHandler(customerRepository);
+    this.customerHandler = new CustomerHandler();
   }
 
   @Override

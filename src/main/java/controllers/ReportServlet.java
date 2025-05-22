@@ -3,9 +3,6 @@ package controllers;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-import repositories.ConsultaVeterinariaRepository;
-import repositories.IngressoRepository;
-import repositories.FuncionarioRepository;
 import handlers.ReportHandler;
 
 import java.io.IOException;
@@ -17,11 +14,7 @@ public class ReportServlet extends BaseServlet {
   private final ReportHandler reportHandler;
 
   public ReportServlet() {
-    ConsultaVeterinariaRepository consultaRepo = new ConsultaVeterinariaRepository();
-    IngressoRepository ingressoRepo = new IngressoRepository();
-    FuncionarioRepository funcionarioRepo = new FuncionarioRepository();
-
-    this.reportHandler = new ReportHandler(consultaRepo, ingressoRepo, funcionarioRepo);
+    this.reportHandler = new ReportHandler();
   }
 
   @Override

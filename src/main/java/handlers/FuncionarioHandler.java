@@ -12,8 +12,8 @@ public class FuncionarioHandler {
 
   private final FuncionarioRepository funcionarioRepository;
 
-  public FuncionarioHandler(FuncionarioRepository funcionarioRepository) {
-    this.funcionarioRepository = funcionarioRepository;
+  public FuncionarioHandler() {
+    this.funcionarioRepository = new FuncionarioRepository();
   }
 
   public List<Funcionario> listarTodosFuncionarios() {

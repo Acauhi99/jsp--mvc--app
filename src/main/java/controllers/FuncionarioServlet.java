@@ -5,7 +5,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import models.Funcionario;
 import models.Funcionario.Cargo;
-import repositories.FuncionarioRepository;
 import handlers.FuncionarioHandler;
 
 import java.io.IOException;
@@ -21,8 +20,7 @@ public class FuncionarioServlet extends BaseServlet {
   private final FuncionarioHandler funcionarioHandler;
 
   public FuncionarioServlet() {
-    FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
-    this.funcionarioHandler = new FuncionarioHandler(funcionarioRepository);
+    this.funcionarioHandler = new FuncionarioHandler();
   }
 
   @Override

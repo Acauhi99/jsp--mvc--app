@@ -18,12 +18,10 @@ public class AlimentacaoHandler {
   private final AnimalRepository animalRepository;
   private final FuncionarioRepository funcionarioRepository;
 
-  public AlimentacaoHandler(AlimentacaoRepository alimentacaoRepository,
-      AnimalRepository animalRepository,
-      FuncionarioRepository funcionarioRepository) {
-    this.alimentacaoRepository = alimentacaoRepository;
-    this.animalRepository = animalRepository;
-    this.funcionarioRepository = funcionarioRepository;
+  public AlimentacaoHandler() {
+    this.alimentacaoRepository = new AlimentacaoRepository();
+    this.animalRepository = new AnimalRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
   }
 
   public List<Animal> getAllAnimais() {

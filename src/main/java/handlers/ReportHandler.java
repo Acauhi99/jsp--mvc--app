@@ -24,13 +24,10 @@ public class ReportHandler {
 
   private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  public ReportHandler(
-      ConsultaVeterinariaRepository consultaRepository,
-      IngressoRepository ingressoRepository,
-      FuncionarioRepository funcionarioRepository) {
-    this.consultaRepository = consultaRepository;
-    this.ingressoRepository = ingressoRepository;
-    this.funcionarioRepository = funcionarioRepository;
+  public ReportHandler() {
+    this.consultaRepository = new ConsultaVeterinariaRepository();
+    this.ingressoRepository = new IngressoRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
   }
 
   public Map<String, Object> gerarRelatorioConsultas(

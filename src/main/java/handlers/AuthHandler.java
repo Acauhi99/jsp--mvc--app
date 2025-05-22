@@ -25,9 +25,9 @@ public class AuthHandler {
   public static final String ROLE_VETERINARIO = "VETERINARIO";
   public static final String ROLE_MANUTENCAO = "MANUTENCAO";
 
-  public AuthHandler(CustomerRepository customerRepository, FuncionarioRepository funcionarioRepository) {
-    this.customerRepository = customerRepository;
-    this.funcionarioRepository = funcionarioRepository;
+  public AuthHandler() {
+    this.customerRepository = new CustomerRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
     this.authRepository = new AuthRepository();
   }
 

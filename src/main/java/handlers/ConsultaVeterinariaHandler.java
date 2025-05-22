@@ -22,13 +22,10 @@ public class ConsultaVeterinariaHandler {
   private final AnimalRepository animalRepository;
   private final FuncionarioRepository funcionarioRepository;
 
-  public ConsultaVeterinariaHandler(
-      ConsultaVeterinariaRepository consultaRepository,
-      AnimalRepository animalRepository,
-      FuncionarioRepository funcionarioRepository) {
-    this.consultaRepository = consultaRepository;
-    this.animalRepository = animalRepository;
-    this.funcionarioRepository = funcionarioRepository;
+  public ConsultaVeterinariaHandler() {
+    this.consultaRepository = new ConsultaVeterinariaRepository();
+    this.animalRepository = new AnimalRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
   }
 
   public List<Animal> listarAnimais() {

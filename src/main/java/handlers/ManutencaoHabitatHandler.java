@@ -20,13 +20,10 @@ public class ManutencaoHabitatHandler {
   private final HabitatRepository habitatRepository;
   private final FuncionarioRepository funcionarioRepository;
 
-  public ManutencaoHabitatHandler(
-      ManutencaoHabitatRepository manutencaoRepository,
-      HabitatRepository habitatRepository,
-      FuncionarioRepository funcionarioRepository) {
-    this.manutencaoRepository = manutencaoRepository;
-    this.habitatRepository = habitatRepository;
-    this.funcionarioRepository = funcionarioRepository;
+  public ManutencaoHabitatHandler() {
+    this.manutencaoRepository = new ManutencaoHabitatRepository();
+    this.habitatRepository = new HabitatRepository();
+    this.funcionarioRepository = new FuncionarioRepository();
   }
 
   public List<ManutencaoHabitat> listarManutencoes(

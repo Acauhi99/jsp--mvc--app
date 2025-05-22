@@ -21,9 +21,9 @@ public class AnimalHandler {
   private final AnimalRepository animalRepository;
   private final HabitatRepository habitatRepository;
 
-  public AnimalHandler(AnimalRepository animalRepository, HabitatRepository habitatRepository) {
-    this.animalRepository = animalRepository;
-    this.habitatRepository = habitatRepository;
+  public AnimalHandler() {
+    this.animalRepository = new AnimalRepository();
+    this.habitatRepository = new HabitatRepository();
   }
 
   public List<Animal> listarAnimaisFiltrados(String especie, String classe, String genero,

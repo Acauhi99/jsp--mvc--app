@@ -12,8 +12,8 @@ public class HabitatHandler {
 
   private final HabitatRepository habitatRepository;
 
-  public HabitatHandler(HabitatRepository habitatRepository) {
-    this.habitatRepository = habitatRepository;
+  public HabitatHandler() {
+    this.habitatRepository = new HabitatRepository();
   }
 
   public List<Habitat> listarTodosHabitats() {

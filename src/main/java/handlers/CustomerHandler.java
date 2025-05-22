@@ -11,8 +11,8 @@ public class CustomerHandler {
 
   private final CustomerRepository customerRepository;
 
-  public CustomerHandler(CustomerRepository customerRepository) {
-    this.customerRepository = customerRepository;
+  public CustomerHandler() {
+    this.customerRepository = new CustomerRepository();
   }
 
   public List<Customer> listarTodosVisitantes() {
