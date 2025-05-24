@@ -2,7 +2,7 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <t:master title="Detalhes do Animal">
     <div class="container">
-        <a href="${pageContext.request.contextPath}/animal/galeria" class="back-link">&larr; Voltar para a lista</a>
+        <a href="${pageContext.request.contextPath}/animal/" class="back-link">&larr; Voltar para a lista</a>
         <h1 class="section-title">${animal.nome}</h1>
         <div class="details-container">
             <div class="animal-image" style="height:220px; margin-bottom:2rem; display:flex;align-items:center;justify-content:center;font-size:4rem;">
